@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Career Intelligence Platform | Milestone 1</title>
+  <meta name="description" content="Infosys AI-Powered Career Intelligence Platform — Milestone 1: Text Ingestion & Baseline Sentiment Analysis" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <link rel="stylesheet" href="/static/css/style.css" />
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<!--  HEADER                                                               -->
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<header class="header">
+  <div class="header-inner">
+    <div class="logo">
+      <div class="logo-icon" aria-hidden="true">
+        <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+          <circle cx="16" cy="16" r="14" stroke="url(#g1)" stroke-width="2"/>
+          <path d="M10 20 L16 10 L22 20" stroke="url(#g1)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <circle cx="16" cy="10" r="2" fill="url(#g1)"/>
+          <defs>
+            <linearGradient id="g1" x1="0" y1="0" x2="32" y2="32" gradientUnits="userSpaceOnUse">
+              <stop stop-color="#6366f1"/>
+              <stop offset="1" stop-color="#8b5cf6"/>
+            </linearGradient>
+          </defs>
+        </svg>
+      </div>
+      <div class="logo-text">
+        <span class="logo-title">CareerIQ</span>
+        <span class="logo-sub">AI Intelligence Platform</span>
+      </div>
+    </div>
+    <div class="header-badge">
+      <span class="badge-dot"></span>
+      Milestone 1 — Infosys Internship 7.0
+    </div>
+  </div>
+</header>
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<!--  HERO                                                                 -->
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<section class="hero">
+  <div class="hero-glow" aria-hidden="true"></div>
+  <div class="hero-inner">
+    <h1 class="hero-title">Text Ingestion &amp;<br/><span class="gradient-text">Baseline Sentiment</span></h1>
+    <p class="hero-subtitle">
+      Analyse career text through a full NLP pipeline — ingestion, preprocessing,
+      VADER sentiment scoring, and structured reporting.
+    </p>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<!--  MAIN                                                                 -->
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<main class="main">
+
+  <!-- ── INPUT CARD ──────────────────────────────────────────────────── -->
+  <section class="card input-card" aria-label="Input section">
+    <h2 class="card-title">
+      <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+      Input Source
+    </h2>
+
+    <!-- Tab buttons -->
+    <div class="tab-group" role="tablist" aria-label="Input methods">
+      <button class="tab-btn active" role="tab" data-tab="text"  id="tab-text"  aria-selected="true"  aria-controls="panel-text">
+        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+        Manual Text
+      </button>
+      <button class="tab-btn" role="tab" data-tab="txt"   id="tab-txt"   aria-selected="false" aria-controls="panel-txt">
+        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+        .TXT File
+      </button>
+      <button class="tab-btn" role="tab" data-tab="csv"   id="tab-csv"   aria-selected="false" aria-controls="panel-csv">
+        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+        .CSV File
+      </button>
+      <button class="tab-btn" role="tab" data-tab="audio" id="tab-audio" aria-selected="false" aria-controls="panel-audio">
+        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/></svg>
+        Audio / Video
+      </button>
+    </div>
+
+    <!-- Panel: Manual text -->
+    <div class="tab-panel active" id="panel-text" role="tabpanel" aria-labelledby="tab-text">
+      <label class="field-label" for="manual-text">Enter career-related text</label>
+      <textarea id="manual-text" class="textarea" rows="7"
+        placeholder="Paste a job description, cover letter, employee review, or any career-related text here..."></textarea>
+      <div class="field-meta">
+        <span id="char-count" class="char-count">0 characters</span>
+        <button class="btn-ghost" id="clear-text-btn" type="button">Clear</button>
+      </div>
+    </div>
+
+    <!-- Panel: TXT upload -->
+    <div class="tab-panel" id="panel-txt" role="tabpanel" aria-labelledby="tab-txt">
+      <div class="upload-zone" id="txt-drop-zone" role="button" tabindex="0" aria-label="Upload .txt file">
+        <div class="upload-icon" aria-hidden="true">
+          <svg width="40" height="40" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+        </div>
+        <p class="upload-text">Drag &amp; drop a <strong>.txt</strong> file here, or click to browse</p>
+        <input type="file" id="txt-file-input" accept=".txt" class="file-input-hidden" aria-label="Choose .txt file" />
+        <p id="txt-file-name" class="file-name-display"></p>
+      </div>
+    </div>
+
+    <!-- Panel: CSV upload -->
+    <div class="tab-panel" id="panel-csv" role="tabpanel" aria-labelledby="tab-csv">
+      <div class="upload-zone" id="csv-drop-zone" role="button" tabindex="0" aria-label="Upload .csv file">
+        <div class="upload-icon" aria-hidden="true">
+          <svg width="40" height="40" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+        </div>
+        <p class="upload-text">Drag &amp; drop a <strong>.csv</strong> file here, or click to browse</p>
+        <p class="upload-hint">Auto-detects columns: <code>text</code>, <code>content</code>, <code>review</code>, <code>comment</code></p>
+        <input type="file" id="csv-file-input" accept=".csv" class="file-input-hidden" aria-label="Choose .csv file" />
+        <p id="csv-file-name" class="file-name-display"></p>
+      </div>
+    </div>
+
+    <!-- Panel: Audio/Video upload -->
+    <div class="tab-panel" id="panel-audio" role="tabpanel" aria-labelledby="tab-audio">
+      <div class="upload-zone" id="audio-drop-zone" role="button" tabindex="0" aria-label="Upload audio or video file">
+        <div class="upload-icon" aria-hidden="true">
+          <svg width="40" height="40" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.536 8.464a5 5 0 010 7.072M12 18v-6m0 0V6m0 6H6m6 0h6"/></svg>
+        </div>
+        <p class="upload-text">Drag &amp; drop an <strong>audio or video</strong> file, or click to browse</p>
+        <p class="upload-hint">Supported: WAV, MP3, FLAC, OGG, M4A, MP4, AVI, MOV, MKV, WEBM</p>
+        <input type="file" id="audio-file-input" accept=".wav,.mp3,.flac,.ogg,.m4a,.mp4,.avi,.mov,.mkv,.webm" class="file-input-hidden" aria-label="Choose audio or video file" />
+        <p id="audio-file-name" class="file-name-display"></p>
+      </div>
+      <div class="audio-info-box">
+        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        Transcription uses Google Web Speech API (requires internet). The transcript is then passed through the full NLP pipeline.
+      </div>
+    </div>
+
+    <!-- Analyse button -->
+    <div class="action-row">
+      <button class="btn-primary" id="analyse-btn" type="button" aria-label="Run analysis">
+        <span class="btn-icon" aria-hidden="true">
+          <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+        </span>
+        <span class="btn-text">Analyse</span>
+        <span class="btn-loader" id="btn-loader" aria-hidden="true"></span>
+      </button>
+      <p class="action-hint" id="action-hint"></p>
+    </div>
+
+    <!-- Error message -->
+    <div class="error-box hidden" id="error-box" role="alert" aria-live="polite">
+      <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+      <span id="error-text"></span>
+    </div>
+  </section>
+
+  <!-- ── RESULTS (hidden until analysis runs) ────────────────────────── -->
+  <section class="results-section hidden" id="results-section" aria-label="Analysis results" aria-live="polite">
+
+    <!-- Transcript box (audio/video only) -->
+    <div class="card transcript-card hidden" id="transcript-card">
+      <h2 class="card-title">
+        <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/></svg>
+        Transcript
+      </h2>
+      <div class="transcript-text" id="transcript-text" aria-label="Transcribed text"></div>
+    </div>
+
+    <!-- Sentiment score cards -->
+    <div class="scores-grid">
+      <div class="score-card" id="score-label-card">
+        <span class="score-card-label">Overall Sentiment</span>
+        <span class="score-card-value" id="score-label">—</span>
+      </div>
+      <div class="score-card">
+        <span class="score-card-label">Compound Score</span>
+        <span class="score-card-value" id="score-compound">—</span>
+      </div>
+      <div class="score-card">
+        <span class="score-card-label">Positive</span>
+        <span class="score-card-value positive-val" id="score-pos">—</span>
+      </div>
+      <div class="score-card">
+        <span class="score-card-label">Negative</span>
+        <span class="score-card-value negative-val" id="score-neg">—</span>
+      </div>
+      <div class="score-card">
+        <span class="score-card-label">Neutral</span>
+        <span class="score-card-value" id="score-neu">—</span>
+      </div>
+    </div>
+
+    <!-- Charts row -->
+    <div class="charts-row">
+      <div class="card chart-card">
+        <h2 class="card-title">Sentiment Distribution</h2>
+        <div class="chart-container">
+          <canvas id="sentiment-doughnut" aria-label="Sentiment distribution doughnut chart" role="img"></canvas>
+        </div>
+      </div>
+      <div class="card chart-card">
+        <h2 class="card-title">Top Words</h2>
+        <div class="chart-container">
+          <canvas id="top-words-bar" aria-label="Top words bar chart" role="img"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Preprocessing stats -->
+    <div class="card" id="preprocessing-card">
+      <h2 class="card-title">
+        <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18"/></svg>
+        Preprocessing Pipeline
+      </h2>
+      <div class="stats-grid" id="stats-grid"></div>
+      <div class="pipeline-steps" id="pipeline-steps"></div>
+    </div>
+
+    <!-- Emotion tags -->
+    <div class="card" id="emotion-card">
+      <h2 class="card-title">
+        <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/></svg>
+        Emotion Tags
+      </h2>
+      <div class="tag-row" id="emotion-tags" role="list" aria-label="Emotion tags"></div>
+    </div>
+
+    <!-- Per-sentence breakdown -->
+    <div class="card" id="sentence-card">
+      <h2 class="card-title">
+        <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 10h16M4 14h16M4 18h7"/></svg>
+        Per-Sentence Sentiment
+      </h2>
+      <div class="sentence-list" id="sentence-list" aria-label="Sentence-level sentiment breakdown"></div>
+    </div>
+
+    <!-- Report metadata -->
+    <div class="card report-meta-card" id="report-meta-card">
+      <h2 class="card-title">
+        <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+        Report Summary
+      </h2>
+      <div class="report-meta-grid" id="report-meta"></div>
+    </div>
+
+  </section>
+</main>
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<!--  FOOTER                                                               -->
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<footer class="footer">
+  <p>AI-Powered Career Intelligence Platform &nbsp;·&nbsp; Infosys Virtual Internship 7.0 &nbsp;·&nbsp; Milestone 1</p>
+</footer>
+
+<script src="/static/js/app.js"></script>
+</body>
+</html>

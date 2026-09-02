@@ -1,0 +1,28 @@
+# ============================================================
+# AI-Powered Career Intelligence Platform — Milestone 1
+# Python Dependencies
+# ============================================================
+
+# Web framework
+flask>=3.0.0
+flask-cors>=4.0.0
+
+# NLP — preprocessing
+nltk>=3.8.1
+
+# Sentiment analysis
+vaderSentiment>=3.3.2
+
+# Audio/Video transcription
+SpeechRecognition>=3.10.0
+pydub>=0.25.1
+moviepy>=2.0.0
+
+# CSV/data handling (stdlib csv is used, pandas optional)
+pandas>=2.0.0
+
+# Testing
+pytest>=8.0.0
+
+# Utilities
+Werkzeug>=3.0.0
