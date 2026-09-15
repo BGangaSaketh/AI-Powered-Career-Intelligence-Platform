@@ -772,11 +772,423 @@ body {
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
-   UTILITIES
+   UTILITIES & NAVIGATION
    ══════════════════════════════════════════════════════════════════════════ */
 .hidden { display: none !important; }
+
+/* Section toggling */
+.section-container { display: none; }
+.section-container.active { display: block; }
+
+/* Main nav buttons in header */
+.main-nav {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.nav-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  font-weight: 500;
+  padding: 8px 16px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all var(--dur-fast) var(--ease);
+}
+
+.nav-btn:hover {
+  color: var(--text-primary);
+  background: rgba(255,255,255,0.04);
+}
+
+.nav-btn.active {
+  color: #ffffff;
+  background: rgba(99,102,241,0.15);
+  border-color: rgba(99,102,241,0.4);
+  box-shadow: 0 0 16px rgba(99,102,241,0.2);
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   MILESTONE 2: MEETING INTELLIGENCE STYLES
+   ══════════════════════════════════════════════════════════════════════════ */
+
+.card-header-flex {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.meeting-history-select-wrap {
+  min-width: 220px;
+}
+
+.history-select {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+  padding: 8px 14px;
+  border-radius: var(--radius-sm);
+  font-size: 0.82rem;
+  width: 100%;
+  outline: none;
+  cursor: pointer;
+}
+
+.history-select:focus {
+  border-color: var(--indigo-500);
+}
+
+.field-group {
+  margin-bottom: 16px;
+}
+
+.input-text {
+  width: 100%;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 10px 14px;
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  outline: none;
+  transition: border-color var(--dur-fast);
+}
+
+.input-text:focus {
+  border-color: var(--indigo-500);
+}
+
+/* Pipeline Stepper */
+.progress-card {
+  margin-bottom: 24px;
+}
+
+.progress-title {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 14px;
+}
+
+.pipeline-stepper {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+}
+
+.step-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  background: rgba(255,255,255,0.02);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  transition: all var(--dur-fast);
+}
+
+.step-num {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.1);
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.step-label {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+
+.step-item.active {
+  border-color: var(--indigo-500);
+  background: rgba(99,102,241,0.1);
+}
+
+.step-item.active .step-num {
+  background: var(--indigo-500);
+  color: #fff;
+}
+
+.step-item.active .step-label {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.step-item.completed {
+  border-color: var(--green-400);
+  background: rgba(74,222,128,0.08);
+}
+
+.step-item.completed .step-num {
+  background: var(--green-400);
+  color: #000;
+}
+
+.step-item.completed .step-label {
+  color: var(--green-400);
+}
+
+/* Dashboard Cards */
+.meeting-dashboard {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.dashboard-header-card {
+  padding: 20px 24px;
+}
+
+.dashboard-meta-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.dash-meeting-title {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.dash-meeting-id {
+  font-size: 0.78rem;
+  font-family: var(--font-mono);
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+.badge-completed {
+  background: rgba(74,222,128,0.15);
+  color: var(--green-400);
+  border: 1px solid rgba(74,222,128,0.3);
+  padding: 4px 14px;
+  border-radius: 99px;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.summary-text {
+  font-size: 0.95rem;
+  line-height: 1.7;
+  color: var(--slate-300);
+}
+
+.two-col-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 24px;
+}
+
+.bullet-list {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.bullet-list li {
+  position: relative;
+  padding-left: 24px;
+  font-size: 0.88rem;
+  color: var(--slate-300);
+  line-height: 1.5;
+}
+
+.bullet-list li::before {
+  content: "•";
+  position: absolute;
+  left: 6px;
+  top: 0;
+  color: var(--indigo-400);
+  font-size: 1.2rem;
+  line-height: 1;
+}
+
+/* Action Items Table */
+.table-responsive {
+  overflow-x: auto;
+  margin-top: 12px;
+}
+
+.action-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 0.85rem;
+}
+
+.action-table th, .action-table td {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.action-table th {
+  background: rgba(255,255,255,0.03);
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 600;
+}
+
+.action-table tr:hover td {
+  background: rgba(255,255,255,0.02);
+}
+
+/* Priority Badges */
+.badge-priority {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 99px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.badge-priority-High {
+  background: rgba(248,113,113,0.15);
+  color: var(--red-400);
+  border: 1px solid rgba(248,113,113,0.3);
+}
+
+.badge-priority-Medium {
+  background: rgba(251,191,36,0.15);
+  color: var(--amber-400);
+  border: 1px solid rgba(251,191,36,0.3);
+}
+
+.badge-priority-Low {
+  background: rgba(56,189,248,0.15);
+  color: var(--sky-400);
+  border: 1px solid rgba(56,189,248,0.3);
+}
+
+.badge-priority-Unknown {
+  background: rgba(148,163,184,0.15);
+  color: var(--slate-400);
+  border: 1px solid rgba(148,163,184,0.3);
+}
+
+/* Status Badges */
+.badge-status {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 99px;
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
+.badge-status-Pending {
+  background: rgba(251,191,36,0.12);
+  color: var(--amber-400);
+  border: 1px solid rgba(251,191,36,0.25);
+}
+
+.badge-status-In-Progress {
+  background: rgba(99,102,241,0.15);
+  color: var(--indigo-400);
+  border: 1px solid rgba(99,102,241,0.3);
+}
+
+.badge-status-Completed {
+  background: rgba(74,222,128,0.15);
+  color: var(--green-400);
+  border: 1px solid rgba(74,222,128,0.3);
+}
+
+/* Participants Cards */
+.participants-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+  margin-top: 12px;
+}
+
+.participant-card-item {
+  background: rgba(255,255,255,0.02);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  transition: border-color var(--dur-fast);
+}
+
+.participant-card-item:hover {
+  border-color: rgba(99,102,241,0.3);
+}
+
+.participant-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.avatar-circle {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--indigo-500), var(--violet-500));
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+
+.participant-name-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.responsibility-subheading {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 6px;
+
+}
+
+.transcript-summary-heading {
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--text-primary);
+  user-select: none;
+}
+
+.margin-top-sm {
+  margin-top: 14px;
+}
 
 /* Sentiment-label coloring for score card */
 #score-label.Positive { color: var(--green-400); }
 #score-label.Negative { color: var(--red-400);   }
 #score-label.Neutral  { color: var(--slate-400); }
+

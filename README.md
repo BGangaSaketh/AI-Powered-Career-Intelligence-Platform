@@ -1,268 +1,284 @@
-# Infosys AI-Powered Career Intelligence Platform
+# AI-Powered Career Intelligence Platform
 
 [![Python](https://img.shields.io/badge/Python-3.9%2B-blue?logo=python)](https://python.org)
 [![Flask](https://img.shields.io/badge/Flask-3.x-black?logo=flask)](https://flask.palletsprojects.com)
-[![NLTK](https://img.shields.io/badge/NLP-NLTK-green)](https://nltk.org)
-[![VADER](https://img.shields.io/badge/Sentiment-VADER-orange)](https://github.com/cjhutto/vaderSentiment)
+[![Pydantic](https://img.shields.io/badge/Pydantic-v2-red)](https://pydantic.dev)
+[![SQLite](https://img.shields.io/badge/SQLite-Database-blue?logo=sqlite)](https://sqlite.org)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Tests](https://img.shields.io/badge/Tests-77%20passed-brightgreen)](#running-tests)
+[![Tests](https://img.shields.io/badge/Tests-104%20passed-brightgreen)](#running-tests)
 
-A locally-runnable web application built for the **Infosys Virtual Internship 7.0** that analyses career-related text using a complete NLP pipeline — text ingestion, preprocessing, VADER sentiment analysis, audio/video transcription, and structured reporting.
+The **AI-Powered Career Intelligence Platform** is an enterprise-grade AI software application designed to transform career communications, interviews, and meeting recordings into structured, actionable intelligence.
+
+The application combines a modern text NLP processing engine (ingestion, NLTK preprocessing, VADER sentiment scoring) with an advanced **Meeting Intelligence Pipeline** powered by configurable LLMs, strict Pydantic JSON schema validation, sentence-aware long transcript chunking, conservative participant mapping, and persistent SQLite database storage.
 
 ---
 
 ## Table of Contents
 
 1. [Project Overview](#project-overview)
-2. [Infosys Virtual Internship 7.0](#infosys-virtual-internship-70)
-3. [Milestone 1 — Text Ingestion and Baseline Sentiment](#milestone-1)
-4. [Features](#features)
-5. [Project Architecture](#project-architecture)
-6. [Installation](#installation)
-7. [Running the Application](#running-the-application)
-8. [Running Tests](#running-tests)
-9. [Sample Data](#sample-data)
-10. [Milestone 1 Tasks Completed](#milestone-1-tasks-completed)
-11. [License](#license)
+2. [Features](#features)
+3. [Architecture](#architecture)
+4. [Meeting Processing Pipeline](#meeting-processing-pipeline)
+5. [Transcription](#transcription)
+6. [LLM Processing](#llm-processing)
+7. [Prompt Engineering](#prompt-engineering)
+8. [Structured Output](#structured-output)
+9. [Schema Validation](#schema-validation)
+10. [Long Transcript Handling](#long-transcript-handling)
+11. [Summarization](#summarization)
+12. [Action Item Extraction](#action-item-extraction)
+13. [Participant Mapping](#participant-mapping)
+14. [Database](#database)
+15. [API Reference](#api-reference)
+16. [User Interface](#user-interface)
+17. [Installation](#installation)
+18. [Environment Variables](#environment-variables)
+19. [Running the Application](#running-the-application)
+20. [Running Tests](#running-tests)
+21. [License](#license)
 
 ---
 
 ## Project Overview
 
-The **AI-Powered Career Intelligence Platform** helps users understand the sentiment behind career-related text — job descriptions, employee reviews, cover letters, transcribed interviews, and more.
+The platform operates across two main operational modes:
 
-Users can input text via four methods:
-
-- **Manual text** entry
-- **.TXT file** upload
-- **.CSV file** upload
-- **Audio / Video** file (speech is transcribed then analysed)
-
-Every input passes through the same modular NLP pipeline:
-
-```
-Input -> Validation -> Preprocessing -> VADER Sentiment -> Report
-```
-
-Results are displayed in a clean dark-themed web UI with sentiment scores, doughnut and bar charts, per-sentence breakdown, and a full structured report.
-
----
-
-## Infosys Virtual Internship 7.0
-
-| Field | Detail |
-|-------|--------|
-| Programme | Infosys Springboard Virtual Internship 7.0 |
-| Project | AI-Powered Career Intelligence Platform |
-| Milestone | Milestone 1 - Text Ingestion and Baseline Sentiment |
-| Developer | Ganga Saketh |
-| Year | 2026 |
-
----
-
-## Milestone 1
-
-Milestone 1 covers the complete text-ingestion-to-sentiment pipeline, validated by 77 automated tests.
-
-| Task | Description | Status |
-|------|-------------|--------|
-| Task 1 | Text Ingestion Workflow | Complete |
-| Task 2 | Preprocessing Validation | Complete |
-| Task 3 | VADER Sentiment Validation | Complete |
-| Task 4 | Initial Emotion/Sentiment Report | Complete |
-| Task 5 | Complete Pipeline Integration Testing | Complete |
+1. **Text & Sentiment NLP Engine**: Ingests raw text, `.txt`, `.csv`, or audio/video files to run NLTK tokenization, stop-word filtering, lemmatization, and VADER sentiment analysis.
+2. **Meeting Intelligence Engine**: Ingests meeting recordings (WAV, MP3, MP4, AVI, MKV, etc.) or meeting transcripts, converts speech via Speech/Whisper transcription, processes text through configurable LLMs, validates output schemas, extracts executive summaries, key discussion points, formal decisions, action items, and participant responsibilities, and persists records in SQLite.
 
 ---
 
 ## Features
 
-### Text Ingestion (Task 1)
+- **Multi-Modal Input**: Ingest manual text, `.txt` files, `.csv` spreadsheets, or audio/video recordings.
+- **Speech & Audio Processing**: Automatic audio normalisation (16 kHz mono WAV) and speech transcription.
+- **Configurable LLM Layer**: Pluggable provider support (Mock, OpenAI, Google Gemini, Ollama, Custom REST endpoints).
+- **Anti-Hallucination Prompt Engineering**: Reusable prompt templates enforcing strict JSON output and returning `null`/`[]`/`"Unknown"` when data is missing.
+- **Strict Schema Validation**: Powered by Pydantic v2 with JSON cleanup and error recovery.
+- **Long Transcript Handling**: Sentence-aware sliding-window chunking with token overlap and intermediate result aggregation.
+- **Action Extraction Engine**: Extracts task description, assigned participant, deadline, priority (`High`, `Medium`, `Low`, `Unknown`), and status (`Pending`, `In Progress`, `Completed`).
+- **Conservative Participant Mapping**: Prevents premature merging of distinct names (e.g. preserving "Ravi", "Ravi Kumar", "R. Kumar" as distinct unless explicit context connects them).
+- **SQLite Database Persistence**: Relational storage for meetings, transcripts, action items, key points, decisions, and participants with foreign key constraints.
+- **Interactive Dashboard**: Modern glassmorphism UI with real-time pipeline status, priority/status badges, and history selector.
 
-Three input methods, all validated before processing:
+---
 
-| Method | Description |
-|--------|-------------|
-| Manual Text | Type or paste any career-related text into the UI |
-| TXT Upload | Upload a `.txt` file; content is read and validated |
-| CSV Upload | Upload a `.csv` file; auto-detects text column (`text`, `content`, `review`, `comment`, `description`, or first column) |
-
-Validation checks:
-- Empty or whitespace-only input
-- None / non-string input
-- Input exceeding maximum allowed length
-- File encoding issues
-
-### Text Preprocessing (Task 2)
-
-A 7-step NLP pipeline implemented in `modules/preprocessing.py` using NLTK:
-
-| Step | Operation |
-|------|-----------|
-| 1 | Noise filtering — removes URLs, email addresses, HTML tags |
-| 2 | Special character handling — removes #, @, $, %, etc. |
-| 3 | Punctuation handling — strips punctuation tokens |
-| 4 | Lowercasing |
-| 5 | Tokenization — splits text into word tokens (nltk.word_tokenize) |
-| 6 | Stop-word removal — removes NLTK English stop-words |
-| 7 | Lemmatization — reduces tokens to base form (WordNetLemmatizer) |
-
-Returns: token lists, word counts, unique word count, top-10 frequent words.
-
-### VADER Sentiment Analysis (Task 3)
-
-Uses the `vaderSentiment` library. No API key required. No mock results.
-
-| Output | Description |
-|--------|-------------|
-| compound | Overall score in [-1.0, 1.0] |
-| pos | Proportion of positive sentiment [0, 1] |
-| neg | Proportion of negative sentiment [0, 1] |
-| neu | Proportion of neutral sentiment [0, 1] |
-| label | "Positive", "Negative", or "Neutral" |
-| Per-sentence | Each sentence scored individually |
-
-VADER thresholds:
-- compound >= 0.05 -> Positive
-- compound <= -0.05 -> Negative
-- -0.05 < compound < 0.05 -> Neutral
-
-### Audio and Video Transcription
-
-Speech-to-text via Google Web Speech API (free, requires internet):
-
-| Step | Technology |
-|------|-----------|
-| Video to Audio | moviepy (extracts audio track) |
-| Audio normalisation | pydub (converts to 16 kHz mono 16-bit PCM WAV) |
-| Chunking | 30-second chunks to comply with API limits |
-| Transcription | SpeechRecognition (Google Web Speech API) |
-
-Supported formats: WAV, MP3, FLAC, OGG, M4A, MP4, AVI, MOV, MKV, WEBM
-
-The transcript is passed through the same Preprocessing -> Sentiment -> Report pipeline.
-
-### Sentiment Report (Task 4)
-
-`modules/reporting.py` assembles a structured JSON report containing:
-
-- Report title, milestone label, timestamp
-- Input summary (source, character count, row count)
-- Preprocessing summary (sentence count, word counts, top words)
-- Sentiment summary (overall label, all scores, per-sentence breakdown)
-- Emotion tags derived from score ranges
-
-### Complete Pipeline (Task 5)
+## Architecture
 
 ```
-Input
-  |
-modules/ingestion.py       validate and extract text
-  |
-modules/preprocessing.py   noise filter -> tokenize -> stop-words -> lemmatize
-  |
-modules/sentiment.py       VADER scores (compound, pos, neg, neu, label)
-  |
-modules/reporting.py       structured JSON report and emotion tags
-  |
-templates/index.html       doughnut chart, bar chart, per-sentence table
+Meeting Recording / Audio / Transcript
+                 ↓
+Speech / Whisper Transcription (modules/transcription.py)
+                 ↓
+Input Validation & Token Estimation (modules/long_transcript.py)
+                 ↓
+      [ Single Pass / Chunking ]
+                 ↓
+LLM Service Layer (modules/llm_service.py & modules/prompts.py)
+                 ↓
+Structured Pydantic JSON Validation (modules/schemas.py)
+                 ↓
+Summarization | Action Extraction | Participant Mapping
+                 ↓
+Database Persistence (modules/database.py)
+                 ↓
+Meeting Intelligence Dashboard (templates/index.html & app.js)
 ```
 
 ---
 
-## Project Architecture
+## Meeting Processing Pipeline
 
+1. **Upload & Ingestion**: The user uploads an audio/video file or pastes a transcript.
+2. **Transcription**: Media files are extracted and converted via `pydub`/`moviepy` into 16 kHz mono PCM WAV chunks and transcribed.
+3. **Token Estimation & Chunking**: Transcripts are checked against model context limits (~4 chars/token). Long transcripts are split along sentence boundaries with overlapping token windows.
+4. **LLM Extraction**: System and user prompts enforce strict schema compliance and zero hallucination.
+5. **Schema Validation**: Output JSON is parsed, cleaned, and validated via Pydantic models (`MeetingIntelligence`, `ActionItem`, `Participant`).
+6. **Database Persistence**: Validated records are stored in SQLite using transaction blocks.
+7. **Dashboard Visualization**: Results are served via REST APIs and rendered dynamically in the web UI.
+
+---
+
+## Transcription
+
+Audio and video files are handled in `modules/transcription.py`:
+- Extracts audio tracks from video files (MP4, AVI, MOV, MKV, WEBM) using `moviepy`.
+- Normalises sample rate to 16 kHz, mono channel, 16-bit PCM WAV using `pydub`.
+- Segments audio into 30-second chunks to ensure optimal recognition.
+- Transcribes speech using SpeechRecognition.
+
+---
+
+## LLM Processing
+
+The `LLMService` (`modules/llm_service.py`) abstracts interactions with LLM providers:
+- **Mock**: Deterministic rule-based LLM for offline testing without API key requirements.
+- **OpenAI**: Connects to OpenAI REST endpoints (`gpt-4o-mini`, `gpt-4o`).
+- **Gemini**: Connects to Google Gemini API endpoints (`gemini-1.5-flash`).
+- **Ollama / Custom**: Connects to local Ollama or custom OpenAI-compatible proxies.
+- Includes exponential backoff retry logic (up to 3 retries) for 429/5xx errors.
+
+---
+
+## Prompt Engineering
+
+Prompts in `modules/prompts.py` separate system instructions, user context, transcript content, and JSON output formatting:
+- Instructs the model strictly to never invent names, deadlines, priorities, decisions, or action items.
+- Enforces returning `null`, `[]`, or `"Unknown"` when information is absent.
+- Standardizes output schema structure.
+
+---
+
+## Structured Output
+
+The LLM returns structured JSON matching `MeetingIntelligence`:
+
+```json
+{
+  "summary": "The team aligned on the release timeline and assigned API and UI responsibilities.",
+  "key_points": [
+    "Mobile application launch timeline was confirmed.",
+    "API integration duties assigned."
+  ],
+  "decisions": [
+    "Proceed with the planned release schedule."
+  ],
+  "action_items": [
+    {
+      "task": "Complete API integration",
+      "assigned_to": "Ravi",
+      "deadline": "Friday",
+      "priority": "High",
+      "status": "Pending"
+    }
+  ],
+  "participants": [
+    {
+      "name": "Ravi",
+      "responsibilities": ["Complete API integration"]
+    }
+  ]
+}
 ```
-infosys-ai-powered-career-intelligence-platform/
-|
-+-- app.py                    Flask entry point (routes and pipeline wiring)
-+-- requirements.txt          Python dependencies
-+-- LICENSE                   MIT License
-+-- README.md
-+-- .gitignore
-|
-+-- modules/                  Core pipeline modules
-|   +-- __init__.py
-|   +-- ingestion.py          Task 1 - Text ingestion and validation
-|   +-- preprocessing.py      Task 2 - NLP preprocessing pipeline
-|   +-- sentiment.py          Task 3 - VADER sentiment analysis
-|   +-- reporting.py          Task 4 - Report generation
-|   +-- transcription.py      Audio/video to transcript
-|
-+-- tests/                    Automated test suite (pytest)
-|   +-- __init__.py
-|   +-- test_ingestion.py     Task 1 unit tests (18 tests)
-|   +-- test_preprocessing.py Task 2 unit tests (21 tests)
-|   +-- test_sentiment.py     Task 3 unit tests (24 tests)
-|   +-- test_pipeline.py      Task 5 integration tests (14 tests)
-|
-+-- templates/
-|   +-- index.html            Web UI (4-tab single-page app)
-|
-+-- static/
-|   +-- css/style.css         Dark premium CSS
-|   +-- js/app.js             Async fetch and Chart.js rendering
-|
-+-- sample_inputs/
-    +-- sample.txt            Mixed-sentiment career text for demo
-    +-- sample.csv            10 career-related rows with text column
-```
 
-### Technology Stack
+---
 
-| Component | Technology | Notes |
-|-----------|------------|-------|
-| Backend | Flask 3.x | Lightweight, beginner-friendly |
-| NLP Preprocessing | NLTK | Industry-standard, open-source |
-| Sentiment Analysis | vaderSentiment | Free, no API key |
-| Transcription | SpeechRecognition | Google Web Speech API (free) |
-| Video to Audio | moviepy 2.x | Open-source |
-| Audio Normalisation | pydub | Converts to 16 kHz mono WAV |
-| Frontend | Vanilla HTML/CSS/JS | No build step needed |
-| Charts | Chart.js (CDN) | Doughnut and bar charts |
-| Testing | pytest | 77 tests, 100% passing |
+## Schema Validation
+
+Schema validation in `modules/schemas.py` uses Pydantic:
+- `ActionItem`: Validates `priority` in `High`, `Medium`, `Low`, `Unknown` and `status` in `Pending`, `In Progress`, `Completed`, `Unknown`.
+- `Participant`: Normalises whitespace, validates responsibilities list.
+- `MeetingIntelligence`: Ensures all lists default cleanly without crashing if fields are absent.
+- Includes `parse_and_validate_json()` to strip markdown code blocks (` ```json `) before parsing.
+
+---
+
+## Long Transcript Handling
+
+Implemented in `modules/long_transcript.py`:
+- Calculates token estimates using `len(text) // 4`.
+- Splits transcripts exceeding `MAX_CHUNK_TOKENS` into sentence-bounded chunks with `CHUNK_OVERLAP_TOKENS`.
+- Processes chunks through LLM service and aggregates intermediate extractions into a final deduplicated result.
+
+---
+
+## Summarization
+
+Handled by `modules/summarization.py`:
+- Generates executive meeting summary.
+- Extracts bulleted key discussion points.
+- Extracts bulleted formal team decisions.
+
+---
+
+## Action Item Extraction
+
+Handled by `modules/action_extraction.py`:
+- Extracts actionable tasks from transcripts.
+- Links assigned participant name, deadline, priority level, and status.
+- Uses `null` or `"Unknown"` when information is omitted.
+
+---
+
+## Participant Mapping
+
+Handled by `modules/participant_mapping.py`:
+- Maps meeting participants to their specific responsibilities.
+- Conservative matching rule: Does NOT merge names like "Ravi", "Ravi Kumar", and "R. Kumar" unless explicit evidence exists.
+
+---
+
+## Database
+
+SQLite persistent database (`modules/database.py`):
+- `meetings`: `id` (PRIMARY KEY), `title`, `summary`, `status`, `created_at`
+- `transcripts`: `id`, `meeting_id` (FOREIGN KEY), `raw_text`, `word_count`
+- `participants`: `id`, `meeting_id` (FOREIGN KEY), `name`, `responsibilities_json`
+- `action_items`: `id`, `meeting_id` (FOREIGN KEY), `task`, `assigned_to`, `deadline`, `priority`, `status`
+- `decisions`: `id`, `meeting_id` (FOREIGN KEY), `decision_text`
+- `key_points`: `id`, `meeting_id` (FOREIGN KEY), `point_text`
+
+---
+
+## API Reference
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/` | Web UI Dashboard |
+| POST | `/api/analyze` | Text NLP Preprocessing & Sentiment |
+| POST | `/api/transcribe` | Audio/Video Transcription & NLP |
+| POST | `/meetings/process` | Full Meeting Intelligence Pipeline |
+| GET | `/meetings/<meeting_id>` | Retrieve Processed Meeting Intelligence |
+| GET | `/meetings` | List All Processed Meetings |
+
+---
+
+## User Interface
+
+The web interface features:
+- Dual navigation sections: **Meeting Intelligence** & **Text NLP**.
+- Recording drag & drop zone + Transcript text input.
+- Real-time 4-step pipeline execution status stepper.
+- Dashboard rendering Executive Summary, Key Points, Decisions, Action Items table, and Participant responsibilities.
+- History dropdown to load past meetings from SQLite.
 
 ---
 
 ## Installation
 
 ### Prerequisites
-
-- Python 3.9 or higher
+- Python 3.9+
 - pip
-- Internet connection (for NLTK data on first run, and Google Speech API)
-- ffmpeg (required by pydub for non-WAV audio — [download here](https://ffmpeg.org/download.html))
-
-### 1. Clone the repository
+- ffmpeg (required by pydub for audio formats)
 
 ```bash
-git clone https://github.com/gangasaketh/infosys-ai-powered-career-intelligence-platform.git
-cd infosys-ai-powered-career-intelligence-platform
-```
+git clone https://github.com/gangasaketh/ai-powered-career-intelligence-platform.git
+cd ai-powered-career-intelligence-platform
 
-### 2. Create a virtual environment (recommended)
-
-```bash
 python -m venv venv
+# Activate virtual environment
+# Windows: venv\Scripts\activate
+# Linux/macOS: source venv/bin/activate
 
-# Windows
-venv\Scripts\activate
-
-# macOS / Linux
-source venv/bin/activate
+python -m pip install -r requirements.txt
 ```
 
-### 3. Install dependencies
+---
 
-```bash
-pip install -r requirements.txt
-```
+## Environment Variables
 
-### 4. Download NLTK data
+Copy `.env.example` to `.env`:
 
-NLTK data is downloaded automatically on first run. To download manually:
-
-```bash
-python -c "import nltk; nltk.download('punkt'); nltk.download('punkt_tab'); nltk.download('stopwords'); nltk.download('wordnet'); nltk.download('omw-1.4'); nltk.download('averaged_perceptron_tagger'); nltk.download('averaged_perceptron_tagger_eng')"
+```env
+LLM_PROVIDER=mock
+LLM_MODEL=gpt-4o-mini
+LLM_API_KEY=your_llm_api_key_here
+LLM_API_BASE=https://api.openai.com/v1
+LLM_MAX_TOKENS=2000
+LLM_TEMPERATURE=0.2
+MAX_CHUNK_TOKENS=3000
+CHUNK_OVERLAP_TOKENS=200
+DATABASE_PATH=career_intelligence.db
 ```
 
 ---
@@ -273,116 +289,40 @@ python -c "import nltk; nltk.download('punkt'); nltk.download('punkt_tab'); nltk
 python app.py
 ```
 
-Open your browser at: **http://localhost:5000**
-
-### API Endpoints
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/` | Serve the web UI |
-| POST | `/api/analyze` | Run full NLP pipeline on text or file input |
-| POST | `/api/transcribe` | Transcribe audio/video and run NLP pipeline |
-
-### Quick demo with curl
-
-```bash
-# Analyse text
-curl -X POST http://localhost:5000/api/analyze -F "text=I am thrilled about this amazing career opportunity!"
-
-# Analyse a TXT file
-curl -X POST http://localhost:5000/api/analyze -F "txt_file=@sample_inputs/sample.txt"
-
-# Analyse a CSV file
-curl -X POST http://localhost:5000/api/analyze -F "csv_file=@sample_inputs/sample.csv"
-```
+Access the application in your browser at: `http://localhost:5000`
 
 ---
 
 ## Running Tests
 
+Run the comprehensive pytest suite:
+
 ```bash
-pytest tests/ -v
+python -m pytest
 ```
 
-Expected result:
-
+Output:
 ```
-============================== 77 passed, 2 warnings in ~24s ==============================
+====================== 104 passed, 2 warnings in 7.71s ======================
 ```
 
-| Test File | Tests | Coverage |
-|-----------|-------|----------|
-| test_ingestion.py | 18 | Task 1 - all input methods and edge cases |
-| test_preprocessing.py | 21 | Task 2 - tokenization, stop-words, lemmatization, noise |
-| test_sentiment.py | 24 | Task 3 - pos/neg/neutral detection, score ranges, per-sentence |
-| test_pipeline.py | 14 | Task 5 - end-to-end integration from all input methods |
-
-The 2 warnings are DeprecationWarnings inside the vaderSentiment library and do not affect functionality.
-
----
-
-## Sample Data
-
-| File | Description |
-|------|-------------|
-| `sample_inputs/sample.txt` | Multi-paragraph career text with mixed sentiment, suitable for demo |
-| `sample_inputs/sample.csv` | 10 rows with text and source columns, covering positive, negative, and neutral career opinions |
-
----
-
-## Milestone 1 Tasks Completed
-
-### Task 1 - Text Ingestion Workflow
-
-- Manual text input with validation (empty, whitespace, None, too long)
-- TXT file upload — reads UTF-8, validates content
-- CSV file upload — auto-detects text column, validates rows
-- Standardised result: status, raw_text, rows, errors
-
-### Task 2 - Preprocessing Validation
-
-- Tokenization (nltk.word_tokenize)
-- Stop-word removal (NLTK English stop-words)
-- Lemmatization (WordNetLemmatizer)
-- Noise filtering (URLs, emails, HTML, special characters)
-- Punctuation handling (removed from token list)
-- Empty text handling (returns zero counts)
-- Repeated spaces (collapsed by regex)
-- Different text lengths tested (short, medium, long)
-
-### Task 3 - VADER Sentiment Validation
-
-- Positive sentiment detection
-- Negative sentiment detection
-- Neutral sentiment detection
-- Compound score in [-1, 1]
-- Positive, negative, neutral scores in [0, 1]
-- Scores sum to approximately 1.0
-- Per-sentence breakdown with individual labels
-- Multiple sample inputs tested
-
-### Task 4 - Initial Emotion/Sentiment Report
-
-- Structured JSON report with timestamp and milestone label
-- Input summary, preprocessing summary, sentiment summary
-- Emotion tags derived from compound score ranges
-- Top-10 most frequent words
-- Per-sentence sentiment table in UI
-
-### Task 5 - Complete Pipeline Integration Testing
-
-- End-to-end tests: text input to report
-- End-to-end tests: TXT file to report
-- End-to-end tests: CSV file to report
-- Report schema validation (all required keys present)
-- 14 integration tests, all passing
+Test coverage includes:
+- `test_ingestion.py`: Text, TXT, CSV input validation
+- `test_preprocessing.py`: Tokenization, stop-words, lemmatization
+- `test_sentiment.py`: VADER sentiment scoring
+- `test_pipeline.py`: NLP pipeline integration
+- `test_llm_service.py`: LLM provider retry & schema parsing
+- `test_prompts.py`: Prompt template construction
+- `test_long_transcript.py`: Token estimation & chunking
+- `test_summarization.py`: Summarization engine
+- `test_action_extraction.py`: Action item parsing & null fields
+- `test_participants.py`: Conservative participant matching
+- `test_database.py`: SQLite persistence & relationships
+- `test_meeting_pipeline.py`: End-to-end meeting intelligence pipeline
 
 ---
 
 ## License
 
 This project is licensed under the **MIT License**.
-
-Copyright (c) 2026 Ganga Saketh
-
-See the [LICENSE](LICENSE) file for the full license text.
+Copyright (c) 2026 Ganga Saketh. See [LICENSE](LICENSE) for details.

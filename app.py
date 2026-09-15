@@ -1,13 +1,17 @@
 """
 app.py
 ======
-AI-Powered Career Intelligence Platform — Milestone 1
-Flask Application Entry Point
+AI-Powered Career Intelligence Platform — Flask Application Entry Point
 
-Routes:
+Milestone 1 Routes:
   GET  /                  → Serve the web UI
   POST /api/analyze       → Run the full text pipeline
   POST /api/transcribe    → Transcribe audio/video and optionally analyze
+
+Milestone 2 Meeting Intelligence Routes:
+  POST /meetings/process      (alias /api/meetings/process)   → Complete meeting processing pipeline
+  GET  /meetings/<meeting_id> (alias /api/meetings/<meeting_id>) → Retrieve meeting intelligence by ID
+  GET  /meetings              (alias /api/meetings)            → List all processed meetings
 """
 
 import os
@@ -25,6 +29,10 @@ from modules.sentiment      import analyze_sentiment
 from modules.reporting      import generate_report
 from modules.transcription  import transcribe_file
 
+# Milestone 2 Modules
+from modules.meeting_service import process_meeting_input
+from modules.database import get_meeting, list_meetings, init_db
+
 # ── App setup ─────────────────────────────────────────────────────────────
 app = Flask(__name__)
 CORS(app)
@@ -40,6 +48,7 @@ app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 app.config["MAX_CONTENT_LENGTH"] = 50 * 1024 * 1024   # 50 MB limit
 
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+init_db()
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────
@@ -76,7 +85,7 @@ def _run_pipeline(raw_text: str, ingestion_result: dict) -> dict:
     }
 
 
-# ── Routes ─────────────────────────────────────────────────────────────────
+# ── Milestone 1 Routes ─────────────────────────────────────────────────────
 
 @app.route("/")
 def index():
@@ -92,10 +101,8 @@ def analyze():
       - file upload 'txt_file'    → .txt file
       - file upload 'csv_file'    → .csv file
     """
-    # ── 1. Determine input method ─────────────────────────────────────────
     ingestion_result = None
 
-    # Priority: file uploads > raw text
     if "csv_file" in request.files and request.files["csv_file"].filename:
         f = request.files["csv_file"]
         if not _allowed_file(f.filename, {"csv"}):
@@ -112,14 +119,12 @@ def analyze():
         raw_text = request.form.get("text", "").strip()
         ingestion_result = ingest_text(raw_text)
 
-    # ── 2. Check ingestion status ─────────────────────────────────────────
     if ingestion_result["status"] == "error":
         return jsonify({
             "status":  "error",
             "message": " | ".join(ingestion_result["errors"]),
         }), 400
 
-    # ── 3. Run the pipeline ───────────────────────────────────────────────
     try:
         result = _run_pipeline(ingestion_result["raw_text"], ingestion_result)
         result["status"] = "ok"
@@ -146,14 +151,12 @@ def transcribe():
             "message": f"Unsupported file type. Allowed: {', '.join(sorted(ALLOWED_MEDIA_EXTS))}",
         }), 400
 
-    # Save the upload temporarily
     safe_name   = secure_filename(f.filename)
     unique_name = f"{uuid.uuid4().hex}_{safe_name}"
     save_path   = os.path.join(UPLOAD_FOLDER, unique_name)
     f.save(save_path)
 
     try:
-        # ── Transcribe ───────────────────────────────────────────────────
         transcription_result = transcribe_file(save_path)
 
         if transcription_result["status"] == "error":
@@ -164,7 +167,6 @@ def transcribe():
 
         transcript = transcription_result["transcript"]
 
-        # ── Run NLP pipeline on transcript ───────────────────────────────
         analyze_flag = request.form.get("analyze", "true").lower() == "true"
         pipeline_result = {}
         if analyze_flag and transcript:
@@ -183,9 +185,84 @@ def transcribe():
         logger.exception("Transcription error")
         return jsonify({"status": "error", "message": f"Transcription error: {exc}"}), 500
     finally:
-        # Clean up uploaded file
         if os.path.exists(save_path):
             os.remove(save_path)
+
+
+# ── Milestone 2 Meeting Intelligence Routes ────────────────────────────────
+
+@app.route("/meetings/process", methods=["POST"])
+@app.route("/api/meetings/process", methods=["POST"])
+def process_meeting_endpoint():
+    """
+    Process meeting recording or transcript:
+      - Media File ('media_file') OR Raw Transcript ('transcript')
+      - Title ('title', optional)
+    Runs Whisper transcription -> LLM extraction -> Schema Validation -> DB Persistence
+    """
+    title = request.form.get("title", "Meeting Recording").strip()
+    raw_transcript = request.form.get("transcript", "").strip()
+
+    save_path = None
+    if "media_file" in request.files and request.files["media_file"].filename:
+        f = request.files["media_file"]
+        if not _allowed_file(f.filename, ALLOWED_MEDIA_EXTS):
+            return jsonify({
+                "status": "error",
+                "message": f"Unsupported media format. Allowed: {', '.join(sorted(ALLOWED_MEDIA_EXTS))}"
+            }), 400
+        safe_name = secure_filename(f.filename)
+        unique_name = f"{uuid.uuid4().hex}_{safe_name}"
+        save_path = os.path.join(UPLOAD_FOLDER, unique_name)
+        f.save(save_path)
+        if not title or title == "Meeting Recording":
+            title = f.filename
+
+    if not save_path and not raw_transcript:
+        return jsonify({"status": "error", "message": "Provide an audio/video file or transcript text."}), 400
+
+    try:
+        result = process_meeting_input(
+            file_path=save_path,
+            raw_transcript_input=raw_transcript,
+            title=title
+        )
+        return jsonify(result), 200
+    except ValueError as val_err:
+        return jsonify({"status": "error", "message": str(val_err)}), 400
+    except Exception as exc:
+        logger.exception("Meeting processing error")
+        return jsonify({"status": "error", "message": f"Meeting processing failed: {exc}"}), 500
+    finally:
+        if save_path and os.path.exists(save_path):
+            os.remove(save_path)
+
+
+@app.route("/meetings/<meeting_id>", methods=["GET"])
+@app.route("/api/meetings/<meeting_id>", methods=["GET"])
+def get_meeting_endpoint(meeting_id: str):
+    """Retrieve processed meeting intelligence by meeting ID."""
+    try:
+        meeting_data = get_meeting(meeting_id)
+        if not meeting_data:
+            return jsonify({"status": "error", "message": f"Meeting '{meeting_id}' not found."}), 404
+        meeting_data["status"] = "ok"
+        return jsonify(meeting_data), 200
+    except Exception as exc:
+        logger.exception(f"Error fetching meeting '{meeting_id}'")
+        return jsonify({"status": "error", "message": str(exc)}), 500
+
+
+@app.route("/meetings", methods=["GET"])
+@app.route("/api/meetings", methods=["GET"])
+def list_meetings_endpoint():
+    """List all processed meetings."""
+    try:
+        meetings = list_meetings()
+        return jsonify({"status": "ok", "meetings": meetings}), 200
+    except Exception as exc:
+        logger.exception("Error listing meetings")
+        return jsonify({"status": "error", "message": str(exc)}), 500
 
 
 # ── Run ────────────────────────────────────────────────────────────────────
@@ -193,7 +270,7 @@ def transcribe():
 if __name__ == "__main__":
     print("\n" + "="*60)
     print("  AI-Powered Career Intelligence Platform")
-    print("  Milestone 1: Text Ingestion & Baseline Sentiment")
+    print("  Milestone 1 & Milestone 2 — Meeting Intelligence System")
     print("  Server running at http://localhost:5000")
     print("="*60 + "\n")
     app.run(debug=True, host="0.0.0.0", port=5000)

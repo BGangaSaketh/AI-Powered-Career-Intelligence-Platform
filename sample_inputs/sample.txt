@@ -2,7 +2,7 @@ This is a sample text file for demonstrating the AI-Powered Career Intelligence 
 
 I am excited to apply for the Software Engineer position at your company. Over the past three years, I have developed strong skills in Python, machine learning, and data analysis.
 
-During my internship at TechCorp, I built a recommendation engine that improved user engagement by 35%. I am passionate about solving real-world problems using artificial intelligence.
+During my previous role at TechCorp, I built a recommendation engine that improved user engagement by 35%. I am passionate about solving real-world problems using artificial intelligence.
 
 However, I am concerned about the work-life balance in this role. Some reviews mentioned that overtime is frequently expected, which worries me. I hope the team culture is collaborative and supportive.
 

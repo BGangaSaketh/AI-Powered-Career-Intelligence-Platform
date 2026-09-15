@@ -10,12 +10,16 @@ env/
 ENV/
 .env/
 
-# ── Environment / secrets ────────────────────────────────────
+# ── Environment / secrets / databases ────────────────────────
 .env
 .env.*
 !.env.example
 *.secret
 secrets.json
+*.db
+*.sqlite
+*.sqlite3
+
 
 # ── Python bytecode / cache ──────────────────────────────────
 __pycache__/

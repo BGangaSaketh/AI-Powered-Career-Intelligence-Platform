@@ -470,10 +470,285 @@ function renderReportMeta(rp) {
 }
 
 
+}
+
+
 // ══════════════════════════════════════════════════════════════════════════
-//  UI STATE HELPERS
+//  SECTION NAVIGATION & MEETING INTELLIGENCE (MILESTONE 2)
 // ══════════════════════════════════════════════════════════════════════════
 
+const navBtns = document.querySelectorAll(".nav-btn");
+const sectionContainers = document.querySelectorAll(".section-container");
+
+navBtns.forEach(btn => {
+  btn.addEventListener("click", () => {
+    const targetSectionId = btn.dataset.section;
+
+    navBtns.forEach(b => b.classList.toggle("active", b === btn));
+    sectionContainers.forEach(sec => {
+      sec.classList.toggle("active", sec.id === targetSectionId);
+    });
+  });
+});
+
+// Meeting Input Tabs
+const mtabBtns = document.querySelectorAll("[data-mtab]");
+let activeMTab = "maudio";
+
+mtabBtns.forEach(btn => {
+  btn.addEventListener("click", () => {
+    activeMTab = btn.dataset.mtab;
+    mtabBtns.forEach(b => b.classList.toggle("active", b === btn));
+    document.querySelectorAll("#section-meeting .tab-panel").forEach(p => {
+      p.classList.toggle("active", p.id === `mpanel-${activeMTab}`);
+    });
+    hideMeetingError();
+  });
+});
+
+// File input & Drag drop setup for Meeting Recording
+const meetingFileInput = document.getElementById("meeting-file-input");
+const meetingFileName = document.getElementById("meeting-file-name");
+if (meetingFileInput) {
+  meetingFileInput.addEventListener("change", () => {
+    if (meetingFileInput.files && meetingFileInput.files[0]) {
+      meetingFileName.textContent = `✓  ${meetingFileInput.files[0].name}`;
+    }
+  });
+  setupDropZone("meeting-drop-zone", meetingFileInput, meetingFileName);
+}
+
+// History Select
+const historySelect = document.getElementById("history-select");
+if (historySelect) {
+  loadMeetingHistory();
+  historySelect.addEventListener("change", (e) => {
+    const selectedId = e.target.value;
+    if (selectedId) {
+      fetchMeetingById(selectedId);
+    }
+  });
+}
+
+async function loadMeetingHistory() {
+  try {
+    const res = await fetch("/api/meetings");
+    if (!res.ok) return;
+    const data = await res.json();
+    if (data.status === "ok" && Array.isArray(data.meetings)) {
+      historySelect.innerHTML = `<option value="">-- Load Past Meeting --</option>` +
+        data.meetings.map(m => `<option value="${escHtml(m.id)}">${escHtml(m.title)} (${escHtml(m.created_at.slice(0,10))})</option>`).join("");
+    }
+  } catch (err) {
+    console.warn("Could not fetch meeting history", err);
+  }
+}
+
+async function fetchMeetingById(meetingId) {
+  try {
+    setMeetingLoading(true);
+    hideMeetingError();
+    const res = await fetch(`/api/meetings/${meetingId}`);
+    const data = await res.json();
+    if (res.ok && data.status === "ok") {
+      renderMeetingDashboard(data);
+    } else {
+      showMeetingError(data.message || "Failed to retrieve meeting details.");
+    }
+  } catch (err) {
+    showMeetingError(`Network error: ${err.message}`);
+  } finally {
+    setMeetingLoading(false);
+  }
+}
+
+// Process Meeting Button Handler
+const processMeetingBtn = document.getElementById("process-meeting-btn");
+const meetingBtnLoader = document.getElementById("meeting-btn-loader");
+const meetingErrorBox = document.getElementById("meeting-error-box");
+const meetingErrorText = document.getElementById("meeting-error-text");
+const meetingProgressCard = document.getElementById("meeting-progress-card");
+const meetingDashboard = document.getElementById("meeting-dashboard");
+
+if (processMeetingBtn) {
+  processMeetingBtn.addEventListener("click", handleProcessMeeting);
+}
+
+async function handleProcessMeeting() {
+  hideMeetingError();
+
+  const titleInput = document.getElementById("meeting-title-input").value.trim();
+  const transcriptInput = document.getElementById("meeting-transcript-text").value.trim();
+  const title = titleInput || "Meeting Recording";
+
+  const formData = new FormData();
+  formData.append("title", title);
+
+  if (activeMTab === "maudio") {
+    if (!meetingFileInput.files || !meetingFileInput.files[0]) {
+      showMeetingError("Please select or drop an audio/video recording file.");
+      return;
+    }
+    formData.append("media_file", meetingFileInput.files[0]);
+  } else {
+    if (!transcriptInput) {
+      showMeetingError("Please paste the raw meeting transcript text.");
+      return;
+    }
+    formData.append("transcript", transcriptInput);
+  }
+
+  setMeetingLoading(true);
+  showStepperProgress(true);
+
+  try {
+    updateStep("step-transcribe", "active");
+    await new Promise(r => setTimeout(r, 400));
+    updateStep("step-transcribe", "completed");
+
+    updateStep("step-llm", "active");
+    
+    const res = await fetch("/api/meetings/process", {
+      method: "POST",
+      body: formData,
+    });
+
+    const data = await res.json();
+
+    if (!res.ok || data.status !== "ok") {
+      showMeetingError(data.message || "Meeting processing failed.");
+      showStepperProgress(false);
+      return;
+    }
+
+    updateStep("step-llm", "completed");
+    updateStep("step-validation", "active");
+    await new Promise(r => setTimeout(r, 300));
+    updateStep("step-validation", "completed");
+
+    updateStep("step-db", "active");
+    await new Promise(r => setTimeout(r, 300));
+    updateStep("step-db", "completed");
+
+    renderMeetingDashboard(data);
+    loadMeetingHistory(); // Refresh history dropdown
+
+  } catch (err) {
+    showMeetingError(`Processing failed: ${err.message}`);
+    showStepperProgress(false);
+  } finally {
+    setMeetingLoading(false);
+  }
+}
+
+function renderMeetingDashboard(data) {
+  document.getElementById("dash-title").textContent = data.title || "Meeting Intelligence Report";
+  document.getElementById("dash-id").textContent = `ID: ${data.meeting_id}`;
+  document.getElementById("dash-summary").textContent = data.summary || "No executive summary available.";
+
+  // Render Key Points
+  const kpUl = document.getElementById("dash-key-points");
+  if (data.key_points && data.key_points.length > 0) {
+    kpUl.innerHTML = data.key_points.map(kp => `<li>${escHtml(kp)}</li>`).join("");
+  } else {
+    kpUl.innerHTML = `<li style="color:var(--text-muted)">No key points extracted.</li>`;
+  }
+
+  // Render Decisions
+  const decUl = document.getElementById("dash-decisions");
+  if (data.decisions && data.decisions.length > 0) {
+    decUl.innerHTML = data.decisions.map(d => `<li>${escHtml(d)}</li>`).join("");
+  } else {
+    decUl.innerHTML = `<li style="color:var(--text-muted)">No formal decisions recorded.</li>`;
+  }
+
+  // Render Action Items
+  const tbody = document.getElementById("dash-action-tbody");
+  if (data.action_items && data.action_items.length > 0) {
+    tbody.innerHTML = data.action_items.map(item => `
+      <tr>
+        <td><strong>${escHtml(item.task)}</strong></td>
+        <td>${item.assigned_to ? escHtml(item.assigned_to) : '<span style="color:var(--text-muted)">Unassigned</span>'}</td>
+        <td>${item.deadline ? escHtml(item.deadline) : '<span style="color:var(--text-muted)">—</span>'}</td>
+        <td><span class="badge-priority badge-priority-${escHtml(item.priority || 'Unknown')}">${escHtml(item.priority || 'Unknown')}</span></td>
+        <td><span class="badge-status badge-status-${escHtml((item.status || 'Pending').replace(/\s+/g, '-'))}">${escHtml(item.status || 'Pending')}</span></td>
+      </tr>
+    `).join("");
+  } else {
+    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:var(--text-muted)">No action items extracted.</td></tr>`;
+  }
+
+  // Render Participants & Responsibilities
+  const pGrid = document.getElementById("dash-participants-grid");
+  if (data.participants && data.participants.length > 0) {
+    pGrid.innerHTML = data.participants.map(p => {
+      const initial = p.name ? p.name.charAt(0).toUpperCase() : "?";
+      const resps = p.responsibilities && p.responsibilities.length > 0
+        ? p.responsibilities.map(r => `<li>${escHtml(r)}</li>`).join("")
+        : `<li style="color:var(--text-muted)">No assigned responsibilities</li>`;
+
+      return `
+        <div class="participant-card-item">
+          <div class="participant-header">
+            <div class="avatar-circle">${initial}</div>
+            <div class="participant-name-title">${escHtml(p.name)}</div>
+          </div>
+          <div class="responsibility-subheading">Assigned Responsibilities:</div>
+          <ul class="bullet-list">${resps}</ul>
+        </div>
+      `;
+    }).join("");
+  } else {
+    pGrid.innerHTML = `<p style="color:var(--text-muted);font-size:0.88rem;">No participants mapped.</p>`;
+  }
+
+  // Render Raw Transcript
+  document.getElementById("dash-raw-transcript").textContent = data.raw_transcript || "Transcript unavailable.";
+
+  // Reveal Dashboard
+  meetingDashboard.classList.remove("hidden");
+  meetingDashboard.scrollIntoView({ behavior: "smooth" });
+}
+
+function setMeetingLoading(on) {
+  processMeetingBtn.disabled = on;
+  meetingBtnLoader.classList.toggle("active", on);
+  processMeetingBtn.querySelector(".btn-text").textContent = on ? "Processing…" : "Process Meeting";
+}
+
+function showMeetingError(msg) {
+  meetingErrorText.textContent = msg;
+  meetingErrorBox.classList.remove("hidden");
+}
+
+function hideMeetingError() {
+  meetingErrorBox.classList.add("hidden");
+  meetingErrorText.textContent = "";
+}
+
+function showStepperProgress(show) {
+  meetingProgressCard.classList.toggle("hidden", !show);
+  if (show) {
+    ["step-transcribe", "step-llm", "step-validation", "step-db"].forEach(id => {
+      const el = document.getElementById(id);
+      el.classList.remove("active", "completed");
+    });
+  }
+}
+
+function updateStep(stepId, state) {
+  const el = document.getElementById(stepId);
+  if (!el) return;
+  if (state === "active") {
+    el.classList.remove("completed");
+    el.classList.add("active");
+  } else if (state === "completed") {
+    el.classList.remove("active");
+    el.classList.add("completed");
+  }
+}
+
+// DOM Rendering Helpers & State
 function setLoading(on) {
   analyseBtn.disabled     = on;
   btnLoader.classList.toggle("active", on);
@@ -495,3 +770,4 @@ function escHtml(str) {
   div.textContent = str;
   return div.innerHTML;
 }
+

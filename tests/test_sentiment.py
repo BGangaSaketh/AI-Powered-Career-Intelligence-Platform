@@ -138,7 +138,7 @@ class TestSentiment:
     # ── Different sample inputs ─────────────────────────────────────────
 
     def test_sample_career_positive(self):
-        text = "This internship has been an incredible learning experience with superb mentors."
+        text = "This position has been an incredible learning experience with superb mentors."
         result = analyze_sentiment(text)
         assert result["compound"] > 0
 
