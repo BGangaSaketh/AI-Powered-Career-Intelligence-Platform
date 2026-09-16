@@ -29,9 +29,23 @@ from modules.sentiment      import analyze_sentiment
 from modules.reporting      import generate_report
 from modules.transcription  import transcribe_file
 
-# Milestone 2 Modules
+# Milestone 2 & Milestone 3 Modules
 from modules.meeting_service import process_meeting_input
-from modules.database import get_meeting, list_meetings, init_db
+from modules.database import (
+    get_meeting,
+    list_meetings,
+    init_db,
+    get_meeting_metadata,
+    get_meeting_transcript,
+    get_meeting_summary,
+    get_meeting_decisions,
+    get_meeting_action_items,
+    get_meeting_participants,
+    get_meeting_deadlines,
+    get_all_meetings_knowledge
+)
+from modules.semantic_search import SemanticSearchService
+from modules.rag_service import RAGService
 
 # ── App setup ─────────────────────────────────────────────────────────────
 app = Flask(__name__)
@@ -263,6 +277,214 @@ def list_meetings_endpoint():
     except Exception as exc:
         logger.exception("Error listing meetings")
         return jsonify({"status": "error", "message": str(exc)}), 500
+
+
+# ── Milestone 3 Meeting Knowledge Repository Routes ────────────────────────
+
+@app.route("/meetings/knowledge", methods=["GET"])
+@app.route("/api/meetings/knowledge", methods=["GET"])
+def get_all_meetings_knowledge_endpoint():
+    """Retrieve full knowledge objects for all historical meetings."""
+    try:
+        data = get_all_meetings_knowledge()
+        return jsonify({"status": "ok", "meetings": data}), 200
+    except Exception as exc:
+        logger.exception("Error listing historical meeting knowledge")
+        return jsonify({"status": "error", "message": str(exc)}), 500
+
+
+@app.route("/meetings/<meeting_id>/transcript", methods=["GET"])
+@app.route("/api/meetings/<meeting_id>/transcript", methods=["GET"])
+def get_transcript_endpoint(meeting_id: str):
+    """Retrieve transcript for a specific meeting."""
+    try:
+        data = get_meeting_transcript(meeting_id)
+        if data is None:
+            return jsonify({"status": "error", "message": f"Meeting '{meeting_id}' not found."}), 404
+        data["status"] = "ok"
+        return jsonify(data), 200
+    except Exception as exc:
+        logger.exception(f"Error fetching transcript for meeting '{meeting_id}'")
+        return jsonify({"status": "error", "message": str(exc)}), 500
+
+
+@app.route("/meetings/<meeting_id>/summary", methods=["GET"])
+@app.route("/api/meetings/<meeting_id>/summary", methods=["GET"])
+def get_summary_endpoint(meeting_id: str):
+    """Retrieve summary for a specific meeting."""
+    try:
+        data = get_meeting_summary(meeting_id)
+        if data is None:
+            return jsonify({"status": "error", "message": f"Meeting '{meeting_id}' not found."}), 404
+        data["status"] = "ok"
+        return jsonify(data), 200
+    except Exception as exc:
+        logger.exception(f"Error fetching summary for meeting '{meeting_id}'")
+        return jsonify({"status": "error", "message": str(exc)}), 500
+
+
+@app.route("/meetings/<meeting_id>/decisions", methods=["GET"])
+@app.route("/api/meetings/<meeting_id>/decisions", methods=["GET"])
+def get_decisions_endpoint(meeting_id: str):
+    """Retrieve decisions for a specific meeting."""
+    try:
+        data = get_meeting_decisions(meeting_id)
+        if data is None:
+            return jsonify({"status": "error", "message": f"Meeting '{meeting_id}' not found."}), 404
+        return jsonify({"status": "ok", "meeting_id": meeting_id, "decisions": data}), 200
+    except Exception as exc:
+        logger.exception(f"Error fetching decisions for meeting '{meeting_id}'")
+        return jsonify({"status": "error", "message": str(exc)}), 500
+
+
+@app.route("/meetings/<meeting_id>/action-items", methods=["GET"])
+@app.route("/api/meetings/<meeting_id>/action-items", methods=["GET"])
+def get_action_items_endpoint(meeting_id: str):
+    """Retrieve action items for a specific meeting."""
+    try:
+        data = get_meeting_action_items(meeting_id)
+        if data is None:
+            return jsonify({"status": "error", "message": f"Meeting '{meeting_id}' not found."}), 404
+        return jsonify({"status": "ok", "meeting_id": meeting_id, "action_items": data}), 200
+    except Exception as exc:
+        logger.exception(f"Error fetching action items for meeting '{meeting_id}'")
+        return jsonify({"status": "error", "message": str(exc)}), 500
+
+
+@app.route("/meetings/<meeting_id>/participants", methods=["GET"])
+@app.route("/api/meetings/<meeting_id>/participants", methods=["GET"])
+def get_participants_endpoint(meeting_id: str):
+    """Retrieve participants for a specific meeting."""
+    try:
+        data = get_meeting_participants(meeting_id)
+        if data is None:
+            return jsonify({"status": "error", "message": f"Meeting '{meeting_id}' not found."}), 404
+        return jsonify({"status": "ok", "meeting_id": meeting_id, "participants": data}), 200
+    except Exception as exc:
+        logger.exception(f"Error fetching participants for meeting '{meeting_id}'")
+        return jsonify({"status": "error", "message": str(exc)}), 500
+
+
+@app.route("/meetings/<meeting_id>/deadlines", methods=["GET"])
+@app.route("/api/meetings/<meeting_id>/deadlines", methods=["GET"])
+def get_deadlines_endpoint(meeting_id: str):
+    """Retrieve deadlines for a specific meeting."""
+    try:
+        data = get_meeting_deadlines(meeting_id)
+        if data is None:
+            return jsonify({"status": "error", "message": f"Meeting '{meeting_id}' not found."}), 404
+        return jsonify({"status": "ok", "meeting_id": meeting_id, "deadlines": data}), 200
+    except Exception as exc:
+        logger.exception(f"Error fetching deadlines for meeting '{meeting_id}'")
+        return jsonify({"status": "error", "message": str(exc)}), 500
+
+
+# ── Milestone 3 Task 4 Semantic Search Routes ──────────────────────────────
+
+semantic_search_service = SemanticSearchService()
+
+
+@app.route("/search/semantic", methods=["GET", "POST"])
+@app.route("/api/search/semantic", methods=["GET", "POST"])
+@app.route("/meetings/search/semantic", methods=["GET", "POST"])
+def semantic_search_endpoint():
+    """
+    Natural Language Semantic Search over Historical Meetings:
+    Accepts JSON body or query params:
+      - query / q: str
+      - top_k: int (default 5)
+      - content_type: str (optional)
+      - meeting_id: str (optional)
+      - deduplicate: bool (default false)
+    """
+    try:
+        if request.method == "POST":
+            data = request.get_json(silent=True) or request.form.to_dict()
+            query = data.get("query") or data.get("q") or ""
+            top_k = int(data.get("top_k", 5))
+            content_type = data.get("content_type")
+            meeting_id = data.get("meeting_id")
+            deduplicate = str(data.get("deduplicate", "false")).lower() == "true"
+        else:
+            query = request.args.get("query") or request.args.get("q") or ""
+            top_k = int(request.args.get("top_k", 5))
+            content_type = request.args.get("content_type")
+            meeting_id = request.args.get("meeting_id")
+            deduplicate = request.args.get("deduplicate", "false").lower() == "true"
+
+        if not query or not query.strip():
+            return jsonify({
+                "status": "ok",
+                "query": "",
+                "latency_ms": 0.0,
+                "total_results": 0,
+                "results": []
+            }), 200
+
+        res = semantic_search_service.search(
+            query=query,
+            top_k=top_k,
+            meeting_id=meeting_id,
+            content_type=content_type,
+            deduplicate=deduplicate
+        )
+        return jsonify(res), 200
+    except Exception as exc:
+        logger.exception("Semantic search error")
+        return jsonify({"status": "error", "message": f"Search failed: {exc}"}), 500
+
+
+# ── Milestone 3 Task 5 RAG Question Answering Routes ───────────────────────
+
+rag_service = RAGService(semantic_search_service=semantic_search_service)
+
+
+@app.route("/search/rag", methods=["GET", "POST"])
+@app.route("/api/search/rag", methods=["GET", "POST"])
+@app.route("/meetings/search/rag", methods=["GET", "POST"])
+@app.route("/api/meetings/qa", methods=["GET", "POST"])
+def rag_qa_endpoint():
+    """
+    Retrieval-Augmented Generation (RAG) Grounded Question Answering:
+    Accepts JSON body or query params:
+      - question / q: str
+      - top_k: int (default 5)
+      - content_type: str (optional)
+      - meeting_id: str (optional)
+    """
+    try:
+        if request.method == "POST":
+            data = request.get_json(silent=True) or request.form.to_dict()
+            question = data.get("question") or data.get("q") or ""
+            top_k = int(data.get("top_k", 5))
+            content_type = data.get("content_type")
+            meeting_id = data.get("meeting_id")
+        else:
+            question = request.args.get("question") or request.args.get("q") or ""
+            top_k = int(request.args.get("top_k", 5))
+            content_type = request.args.get("content_type")
+            meeting_id = request.args.get("meeting_id")
+
+        if not question or not question.strip():
+            return jsonify({
+                "status": "ok",
+                "question": "",
+                "answer": "I couldn't find enough information in the available meeting records to answer this question.",
+                "sources": [],
+                "latency_ms": 0.0,
+                "context_chunks_used": 0
+            }), 200
+
+        res = rag_service.answer_question(
+            question=question,
+            top_k=top_k,
+            meeting_id=meeting_id,
+            content_type=content_type
+        )
+        return jsonify(res), 200
+    except Exception as exc:
+        logger.exception("RAG Q&A error")
+        return jsonify({"status": "error", "message": f"RAG Q&A failed: {exc}"}), 500
 
 
 # ── Run ────────────────────────────────────────────────────────────────────

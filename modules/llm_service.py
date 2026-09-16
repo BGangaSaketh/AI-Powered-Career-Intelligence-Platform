@@ -148,8 +148,40 @@ class LLMService:
             logger.info(f"Unknown LLM provider '{self.provider}'. Falling back to mock provider.")
             return self._call_mock_llm(user_instruction)
 
+    def call_llm(self, system_instruction: str, user_instruction: str) -> str:
+        """Execute a text completion request with retry logic."""
+        return self._call_llm_with_retry(system_instruction, user_instruction)
+
     def _call_mock_llm(self, prompt_text: str) -> str:
         """Rule-based mock LLM generator for deterministic unit testing and zero-cost operation."""
+        if "RETRIEVED MEETING CONTEXT:" in prompt_text:
+            if "No relevant meeting context was found" in prompt_text:
+                return "I couldn't find enough information in the available meeting records to answer this question."
+
+            question = ""
+            if "USER QUESTION:" in prompt_text:
+                question = prompt_text.split("USER QUESTION:")[1].split("Answer the user's question")[0].strip().lower()
+
+            # Extract context lines
+            context_lines = []
+            ctx_part = prompt_text.split("RETRIEVED MEETING CONTEXT:")[1].split("USER QUESTION:")[0]
+            for line in ctx_part.splitlines():
+                if "Content Evidence:" in line or "Meeting:" in line:
+                    context_lines.append(line.strip())
+
+            if not context_lines:
+                return "I couldn't find enough information in the available meeting records to answer this question."
+
+            evidence_summary = " ".join(context_lines)
+            
+            # Anti-hallucination relevance check: if query has specific keywords absent in evidence, return fallback
+            stop_words = {"what", "when", "who", "which", "where", "how", "is", "was", "the", "a", "an", "for", "to", "in", "on", "of", "about", "assigned", "decided", "meeting", "discussed", "action", "items"}
+            q_words = set(re.findall(r"\w+", question)) - stop_words
+            if q_words and not any(w in evidence_summary.lower() for w in q_words):
+                return "I couldn't find enough information in the available meeting records to answer this question."
+
+            return f"Based on retrieved meeting evidence: {evidence_summary}"
+
         # Extract transcript portion if present
         transcript = prompt_text
         if "MEETING TRANSCRIPT:" in prompt_text:

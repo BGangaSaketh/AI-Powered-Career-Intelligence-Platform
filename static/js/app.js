@@ -771,3 +771,309 @@ function escHtml(str) {
   return div.innerHTML;
 }
 
+
+// ══════════════════════════════════════════════════════════════════════════
+//  MAIN SECTION NAVIGATION (Meeting Intelligence / Semantic Search / NLP)
+// ══════════════════════════════════════════════════════════════════════════
+document.querySelectorAll(".main-nav .nav-btn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    const targetSection = btn.dataset.section;
+    if (!targetSection) return;
+
+    document.querySelectorAll(".main-nav .nav-btn").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+
+    document.querySelectorAll(".section-container").forEach(sec => {
+      sec.classList.toggle("active", sec.id === targetSection);
+    });
+  });
+});
+
+
+// ══════════════════════════════════════════════════════════════════════════
+//  SEMANTIC SEARCH FRONTEND LOGIC (MILESTONE 3 TASK 4)
+// ══════════════════════════════════════════════════════════════════════════
+const semanticSearchInput  = document.getElementById("semantic-search-input");
+const semanticSearchBtn    = document.getElementById("semantic-search-btn");
+const searchMetaBar        = document.getElementById("search-meta-bar");
+const searchMetaInfo       = document.getElementById("search-meta-info");
+const searchLatencyBadge   = document.getElementById("search-latency-badge");
+const searchResultsList    = document.getElementById("search-results-list");
+const searchFilterType     = document.getElementById("search-filter-type");
+const searchFilterTopK     = document.getElementById("search-filter-topk");
+
+if (semanticSearchBtn) {
+  semanticSearchBtn.addEventListener("click", performSemanticSearch);
+
+  if (semanticSearchInput) {
+    semanticSearchInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") performSemanticSearch();
+    });
+  }
+
+  document.querySelectorAll(".sample-chips-row .chip-btn").forEach(chip => {
+    chip.addEventListener("click", () => {
+      if (semanticSearchInput) {
+        semanticSearchInput.value = chip.dataset.query;
+        performSemanticSearch();
+      }
+    });
+  });
+}
+
+async function performSemanticSearch() {
+  if (!semanticSearchInput) return;
+  const query = semanticSearchInput.value.trim();
+  if (!query) return;
+
+  // Set Loading state
+  semanticSearchBtn.disabled = true;
+  semanticSearchBtn.innerHTML = `
+    <span class="spinner" aria-hidden="true"></span>
+    Searching…
+  `;
+
+  searchResultsList.innerHTML = `
+    <div class="card" style="text-align: center; padding: 40px; color: var(--text-muted);">
+      <p>Searching meeting knowledge repository…</p>
+    </div>
+  `;
+  searchMetaBar.classList.add("hidden");
+
+  try {
+    const contentType = searchFilterType ? searchFilterType.value : "";
+    const topK = searchFilterTopK ? searchFilterTopK.value : 5;
+
+    const res = await fetch("/api/search/semantic", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        query: query,
+        top_k: parseInt(top_k, 10),
+        content_type: contentType || null
+      })
+    });
+
+    if (!res.ok) {
+      throw new Error(`Search request failed with status ${res.status}`);
+    }
+
+    const data = await res.json();
+    if (data.status === "ok") {
+      renderSemanticSearchResults(data);
+    } else {
+      throw new Error(data.message || "Semantic search failed.");
+    }
+  } catch (err) {
+    console.error("Semantic search error:", err);
+    searchResultsList.innerHTML = `
+      <div class="card" style="border-color: rgba(248,113,113,0.3); background: rgba(248,113,113,0.05); color: var(--red-400);">
+        <p>⚠️ <strong>Search Error:</strong> ${escHtml(err.message)}</p>
+      </div>
+    `;
+  } finally {
+    semanticSearchBtn.disabled = false;
+    semanticSearchBtn.innerHTML = `
+      <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+      Search
+    `;
+  }
+}
+
+function renderSemanticSearchResults(data) {
+  const results = data.results || [];
+  const latencyMs = data.latency_ms || 0;
+
+  // Show Performance Latency Badge
+  searchLatencyBadge.textContent = `⚡ Latency: ${latencyMs} ms`;
+  searchMetaInfo.textContent = `Found ${results.length} relevant meeting result${results.length !== 1 ? "s" : ""} for "${data.query}"`;
+  searchMetaBar.classList.remove("hidden");
+
+  if (results.length === 0) {
+    searchResultsList.innerHTML = `
+      <div class="card" style="text-align: center; padding: 40px; color: var(--text-muted);">
+        <p style="font-size: 1.1rem; margin-bottom: 8px;">🔍 No matching meeting records found.</p>
+        <p style="font-size: 0.85rem;">Try rephrasing your search query or selecting a different content type filter.</p>
+      </div>
+    `;
+    return;
+  }
+
+  searchResultsList.innerHTML = results.map(item => {
+    const simPercent = Math.round((item.similarity || item.score || 0) * 100);
+    const dateFormatted = item.date ? item.date.slice(0, 10) : "Recent";
+    const typeLabel = (item.content_type || "transcript").replace("_", " ");
+
+    return `
+      <div class="result-card">
+        <div class="result-card-header">
+          <div class="result-title-wrap">
+            <h3 class="result-title">${escHtml(item.title || "Meeting")}</h3>
+            <span class="result-date">📅 ${escHtml(dateFormatted)}</span>
+          </div>
+          <div class="result-badges-wrap">
+            <span class="badge-type badge-type-${escHtml(item.content_type)}">${escHtml(typeLabel)}</span>
+            <span class="badge-similarity">${simPercent}% Match</span>
+          </div>
+        </div>
+
+        <div class="result-snippet-box">
+          "${escHtml(item.relevant_snippet || item.text || "")}"
+        </div>
+
+        <div class="result-card-actions">
+          <span class="result-meeting-id">Meeting ID: ${escHtml(item.meeting_id)}</span>
+          <button class="btn-view-meeting" onclick="viewMeetingFromSearch('${escHtml(item.meeting_id)}')">
+            View Complete Meeting →
+          </button>
+        </div>
+      </div>
+    `;
+  }).join("");
+}
+
+function viewMeetingFromSearch(meetingId) {
+  // Switch to Meeting Intelligence section
+  const meetingNavBtn = document.getElementById("nav-meeting");
+  if (meetingNavBtn) meetingNavBtn.click();
+
+  // Load meeting data
+  if (typeof fetchMeetingById === "function") {
+    fetchMeetingById(meetingId);
+  }
+}
+
+
+// ══════════════════════════════════════════════════════════════════════════
+//  SEARCH MODE TABS (Semantic Search vs Ask Your Meetings RAG)
+// ══════════════════════════════════════════════════════════════════════════
+document.querySelectorAll(".search-mode-tab").forEach(tab => {
+  tab.addEventListener("click", () => {
+    const smode = tab.dataset.smode;
+    document.querySelectorAll(".search-mode-tab").forEach(t => t.classList.toggle("active", t === tab));
+    document.querySelectorAll(".smode-panel").forEach(p => p.classList.toggle("active", p.id === `smode-panel-${smode}`));
+  });
+});
+
+
+// ══════════════════════════════════════════════════════════════════════════
+//  RAG QUESTION ANSWERING LOGIC (MILESTONE 3 TASK 5)
+// ══════════════════════════════════════════════════════════════════════════
+const ragQuestionInput   = document.getElementById("rag-question-input");
+const ragAskBtn          = document.getElementById("rag-ask-btn");
+const ragOutputContainer = document.getElementById("rag-output-container");
+const ragAnswerText      = document.getElementById("rag-answer-text");
+const ragLatencyBadge    = document.getElementById("rag-latency-badge");
+const ragSourcesList     = document.getElementById("rag-sources-list");
+
+if (ragAskBtn) {
+  ragAskBtn.addEventListener("click", performRAGQuestionAnswering);
+
+  if (ragQuestionInput) {
+    ragQuestionInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") performRAGQuestionAnswering();
+    });
+  }
+
+  document.querySelectorAll(".rag-chip-btn").forEach(chip => {
+    chip.addEventListener("click", () => {
+      if (ragQuestionInput) {
+        ragQuestionInput.value = chip.dataset.question;
+        performRAGQuestionAnswering();
+      }
+    });
+  });
+}
+
+async function performRAGQuestionAnswering() {
+  if (!ragQuestionInput) return;
+  const question = ragQuestionInput.value.trim();
+  if (!question) return;
+
+  ragAskBtn.disabled = true;
+  ragAskBtn.innerHTML = `
+    <span class="spinner" aria-hidden="true"></span>
+    Thinking…
+  `;
+
+  ragOutputContainer.classList.remove("hidden");
+  ragAnswerText.textContent = "Retrieving meeting evidence and generating grounded response…";
+  ragLatencyBadge.textContent = "⚡ Processing…";
+  ragSourcesList.innerHTML = "";
+
+  try {
+    const res = await fetch("/api/search/rag", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ question: question, top_k: 5 })
+    });
+
+    if (!res.ok) {
+      throw new Error(`RAG Q&A failed with status ${res.status}`);
+    }
+
+    const data = await res.json();
+    if (data.status === "ok") {
+      renderRAGResponse(data);
+    } else {
+      throw new Error(data.message || "RAG Q&A failed.");
+    }
+  } catch (err) {
+    console.error("RAG Error:", err);
+    ragAnswerText.textContent = `⚠️ Error: ${err.message}`;
+    ragLatencyBadge.textContent = "⚡ Error";
+    ragSourcesList.innerHTML = "";
+  } finally {
+    ragAskBtn.disabled = false;
+    ragAskBtn.innerHTML = `
+      <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/></svg>
+      Ask Question
+    `;
+  }
+}
+
+function renderRAGResponse(data) {
+  const answer = data.answer || "I couldn't find enough information in the available meeting records to answer this question.";
+  const sources = data.sources || [];
+  const latencyMs = data.latency_ms || 0;
+
+  ragAnswerText.textContent = answer;
+  ragLatencyBadge.textContent = `⚡ Latency: ${latencyMs} ms (${sources.length} sources)`;
+
+  if (sources.length === 0) {
+    ragSourcesList.innerHTML = `
+      <p style="font-size: 0.85rem; color: var(--text-muted); font-style: italic;">
+        No supporting meeting context records were retrieved for this query.
+      </p>
+    `;
+    return;
+  }
+
+  ragSourcesList.innerHTML = sources.map(src => {
+    const simPercent = Math.round((src.similarity || 0) * 100);
+    const dateStr = src.date ? src.date.slice(0, 10) : "Recent";
+    const typeLabel = (src.content_type || "transcript").replace("_", " ");
+
+    return `
+      <div class="rag-source-item">
+        <div class="rag-source-header">
+          <span class="rag-source-title">📌 ${escHtml(src.title || "Meeting")} (${escHtml(dateStr)})</span>
+          <div class="result-badges-wrap">
+            <span class="badge-type badge-type-${escHtml(src.content_type)}">${escHtml(typeLabel)}</span>
+            <span class="badge-similarity">${simPercent}% Match</span>
+          </div>
+        </div>
+        <div class="rag-source-snippet">
+          "${escHtml(src.relevant_snippet || "")}"
+        </div>
+        <div class="result-card-actions">
+          <span class="result-meeting-id">ID: ${escHtml(src.meeting_id)}</span>
+          <button class="btn-view-meeting" onclick="viewMeetingFromSearch('${escHtml(src.meeting_id)}')">
+            Open Meeting Details →
+          </button>
+        </div>
+      </div>
+    `;
+  }).join("");
+}
+

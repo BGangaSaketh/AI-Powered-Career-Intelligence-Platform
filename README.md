@@ -5,11 +5,11 @@
 [![Pydantic](https://img.shields.io/badge/Pydantic-v2-red)](https://pydantic.dev)
 [![SQLite](https://img.shields.io/badge/SQLite-Database-blue?logo=sqlite)](https://sqlite.org)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Tests](https://img.shields.io/badge/Tests-104%20passed-brightgreen)](#running-tests)
+[![Tests](https://img.shields.io/badge/Tests-152%20passed-brightgreen)](#running-tests)
 
 The **AI-Powered Career Intelligence Platform** is an enterprise-grade AI software application designed to transform career communications, interviews, and meeting recordings into structured, actionable intelligence.
 
-The application combines a modern text NLP processing engine (ingestion, NLTK preprocessing, VADER sentiment scoring) with an advanced **Meeting Intelligence Pipeline** powered by configurable LLMs, strict Pydantic JSON schema validation, sentence-aware long transcript chunking, conservative participant mapping, and persistent SQLite database storage.
+The application combines a modern text NLP processing engine with an advanced **Meeting Intelligence Pipeline**, a **Meeting Knowledge Repository**, **Vector Database & Embedding Engine**, **Natural Language Semantic Search**, and **Grounded RAG (Retrieval-Augmented Generation) Question Answering**.
 
 ---
 
@@ -18,24 +18,23 @@ The application combines a modern text NLP processing engine (ingestion, NLTK pr
 1. [Project Overview](#project-overview)
 2. [Features](#features)
 3. [Architecture](#architecture)
-4. [Meeting Processing Pipeline](#meeting-processing-pipeline)
-5. [Transcription](#transcription)
-6. [LLM Processing](#llm-processing)
-7. [Prompt Engineering](#prompt-engineering)
-8. [Structured Output](#structured-output)
-9. [Schema Validation](#schema-validation)
-10. [Long Transcript Handling](#long-transcript-handling)
-11. [Summarization](#summarization)
-12. [Action Item Extraction](#action-item-extraction)
-13. [Participant Mapping](#participant-mapping)
-14. [Database](#database)
-15. [API Reference](#api-reference)
-16. [User Interface](#user-interface)
-17. [Installation](#installation)
-18. [Environment Variables](#environment-variables)
-19. [Running the Application](#running-the-application)
-20. [Running Tests](#running-tests)
-21. [License](#license)
+4. [Milestone 3 Features](#milestone-3-features)
+   - [Meeting Knowledge Repository](#1-meeting-knowledge-repository)
+   - [Embedding Generation](#2-embedding-generation)
+   - [Vector Database Integration](#3-vector-database-integration)
+   - [Semantic Search](#4-semantic-search)
+   - [Grounded RAG Question Answering](#5-grounded-rag-question-answering)
+5. [Meeting Processing Pipeline](#meeting-processing-pipeline)
+6. [Transcription](#transcription)
+7. [LLM Processing & Prompt Engineering](#llm-processing)
+8. [Database & Vector Store Schema](#database)
+9. [API Reference](#api-reference)
+10. [User Interface](#user-interface)
+11. [Installation & Setup](#installation)
+12. [Environment Variables](#environment-variables)
+13. [Running the Application](#running-the-application)
+14. [Running Tests](#running-tests)
+15. [License](#license)
 
 ---
 

@@ -44,6 +44,10 @@
         <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/></svg>
         Meeting Intelligence
       </button>
+      <button class="nav-btn" id="nav-search" data-section="section-search">
+        <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+        Semantic Search
+      </button>
       <button class="nav-btn" id="nav-nlp" data-section="section-nlp">
         <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
         Text &amp; Sentiment NLP
@@ -442,6 +446,148 @@
       </div>
 
     </section>
+  </main>
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<!--  SECTION 3: SEMANTIC SEARCH (MILESTONE 3 TASK 4)                      -->
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<div id="section-search" class="section-container">
+  <section class="hero">
+    <div class="hero-glow" aria-hidden="true"></div>
+    <div class="hero-inner">
+      <h1 class="hero-title">Semantic Search &amp;<br/><span class="gradient-text">Meeting Knowledge Retrieval</span></h1>
+      <p class="hero-subtitle">
+        Search historical meeting intelligence using natural language prompts. Retrieve exact relevant snippets, decisions, action items, and transcripts instantaneously.
+      </p>
+    </div>
+  </section>
+
+  <main class="main">
+    <!-- Search Mode Tabs -->
+    <div class="search-mode-tabs">
+      <button class="search-mode-tab active" id="smode-tab-search" data-smode="search">
+        <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+        Semantic Search
+      </button>
+      <button class="search-mode-tab" id="smode-tab-rag" data-smode="rag">
+        <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/></svg>
+        Ask Your Meetings (RAG Q&amp;A)
+      </button>
+    </div>
+
+    <!-- PANEL 1: SEMANTIC SEARCH -->
+    <div id="smode-panel-search" class="smode-panel active">
+      <section class="card search-card">
+        <h2 class="card-title">
+          <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+          Semantic Snippet Search
+        </h2>
+        <p class="search-prompt-label">What would you like to find in your meetings?</p>
+
+        <div class="search-input-wrap">
+          <input 
+            type="text" 
+            id="semantic-search-input" 
+            class="form-control search-input" 
+            placeholder="e.g. Which meeting discussed the database migration?"
+          />
+          <button id="semantic-search-btn" class="btn btn-primary search-btn">
+            <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+            Search
+          </button>
+        </div>
+
+        <!-- Quick sample queries -->
+        <div class="sample-chips-row">
+          <span class="sample-chips-label">Try example queries:</span>
+          <button class="chip-btn" data-query="Which meeting discussed the database migration?">Database Migration</button>
+          <button class="chip-btn" data-query="Who is assigned to handle API refactoring?">API Refactoring</button>
+          <button class="chip-btn" data-query="What decisions were made about security audits?">Security Audits</button>
+          <button class="chip-btn" data-query="When is the JWT authentication deadline?">JWT Authentication</button>
+        </div>
+
+        <!-- Filters -->
+        <div class="search-filters-bar">
+          <div class="filter-group">
+            <label for="search-filter-type">Content Type:</label>
+            <select id="search-filter-type" class="form-control select-sm">
+              <option value="">All Content Types</option>
+              <option value="transcript">Transcripts</option>
+              <option value="summary">Summaries</option>
+              <option value="decision">Decisions</option>
+              <option value="action_item">Action Items</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label for="search-filter-topk">Max Results:</label>
+            <select id="search-filter-topk" class="form-control select-sm">
+              <option value="5">Top 5</option>
+              <option value="10">Top 10</option>
+              <option value="20">Top 20</option>
+            </select>
+          </div>
+        </div>
+      </section>
+
+      <!-- Search Results Header & Performance Badge -->
+      <div id="search-meta-bar" class="search-meta-bar hidden">
+        <div class="search-meta-info" id="search-meta-info"></div>
+        <div class="latency-badge" id="search-latency-badge"></div>
+      </div>
+
+      <!-- Search Results Container -->
+      <div id="search-results-list" class="search-results-list"></div>
+    </div>
+
+    <!-- PANEL 2: RAG QUESTION ANSWERING -->
+    <div id="smode-panel-rag" class="smode-panel">
+      <section class="card search-card">
+        <h2 class="card-title">
+          <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/></svg>
+          Ask Your Meetings (Grounded RAG)
+        </h2>
+        <p class="search-prompt-label">Ask a question to receive a grounded answer with evidence from your meeting records:</p>
+
+        <div class="search-input-wrap">
+          <input 
+            type="text" 
+            id="rag-question-input" 
+            class="form-control search-input" 
+            placeholder="e.g. What deadline was decided for the mobile application?"
+          />
+          <button id="rag-ask-btn" class="btn btn-primary search-btn">
+            <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/></svg>
+            Ask Question
+          </button>
+        </div>
+
+        <!-- Sample RAG Questions -->
+        <div class="sample-chips-row">
+          <span class="sample-chips-label">Try example questions:</span>
+          <button class="rag-chip-btn" data-question="What deadline was decided for the mobile application?">Mobile App Deadline</button>
+          <button class="rag-chip-btn" data-question="Who was responsible for API integration?">API Integration Lead</button>
+          <button class="rag-chip-btn" data-question="What decision was made about the database migration?">Database Migration Decision</button>
+          <button class="rag-chip-btn" data-question="Which meeting discussed UI testing?">UI Testing Sync</button>
+          <button class="rag-chip-btn" data-question="What action items were assigned to Bob?">Bob's Action Items</button>
+        </div>
+      </section>
+
+      <!-- RAG Answer Container -->
+      <div id="rag-output-container" class="rag-output-container hidden">
+        <div class="card rag-answer-card">
+          <div class="rag-answer-header">
+            <h3 class="rag-answer-title">🤖 Grounded Answer</h3>
+            <div id="rag-latency-badge" class="latency-badge"></div>
+          </div>
+
+          <div id="rag-answer-text" class="rag-answer-text"></div>
+
+          <div class="rag-sources-wrap">
+            <h4 class="rag-sources-heading">📚 Supporting Evidence Sources</h4>
+            <div id="rag-sources-list" class="rag-sources-list"></div>
+          </div>
+        </div>
+      </div>
+    </div>
   </main>
 </div>
 

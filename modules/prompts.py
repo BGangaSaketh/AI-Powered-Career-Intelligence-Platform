@@ -125,3 +125,69 @@ def construct_aggregation_prompt(intermediate_results_json: str) -> dict:
         "system": system_instruction,
         "user": user_msg
     }
+
+
+# ── RAG Prompt Templates (Milestone 3 Task 5) ──────────────────────────────
+
+RAG_SYSTEM_PROMPT = """You are an expert Retrieval-Augmented Generation (RAG) Meeting Assistant.
+Your task is to answer the user's question using ONLY the retrieved meeting context provided below.
+
+CRITICAL RAG CONSTRAINTS & GROUNDING RULES:
+1. Rely SOLELY on the clear facts contained in the supplied meeting context below. Do NOT use outside knowledge.
+2. Do NOT invent, assume, or hallucinate any deadlines, participant names, dates, decisions, action items, or responsibilities.
+3. If the supplied meeting context does NOT contain enough information to answer the question, state explicitly:
+   "I couldn't find enough information in the available meeting records to answer this question."
+4. Answer clearly, accurately, and concisely.
+5. Reference the relevant meeting title or participant details when present in the retrieved context.
+"""
+
+
+def build_rag_prompt(question: str, context_items: list) -> dict:
+    """
+    Construct system and user messages for Grounded RAG Question Answering.
+
+    Parameters
+    ----------
+    question : str
+        User's natural language question.
+    context_items : list of dict
+        Retrieved context snippets containing meeting_id, title, text/relevant_snippet, content_type, etc.
+
+    Returns
+    -------
+    dict
+        {"system": str, "user": str}
+    """
+    if not context_items:
+        context_str = "No relevant meeting context was found in the database."
+    else:
+        formatted_blocks = []
+        for idx, item in enumerate(context_items, 1):
+            m_title = item.get("title") or "Meeting"
+            m_id = item.get("meeting_id") or "unknown"
+            m_date = item.get("date") or item.get("created_at") or ""
+            c_type = item.get("content_type") or "text"
+            text_snippet = item.get("relevant_snippet") or item.get("text") or ""
+
+            block = (
+                f"[Source {idx}] Meeting: \"{m_title}\" (ID: {m_id}, Date: {m_date})\n"
+                f"Content Type: {c_type}\n"
+                f"Content Evidence: \"{text_snippet.strip()}\""
+            )
+            formatted_blocks.append(block)
+        context_str = "\n\n".join(formatted_blocks)
+
+    user_msg = (
+        f"RETRIEVED MEETING CONTEXT:\n"
+        f"{context_str}\n\n"
+        f"USER QUESTION:\n"
+        f"{question.strip()}\n\n"
+        f"Answer the user's question accurately and concisely using ONLY the retrieved context above. "
+        f"If the information is not present in the context, respond with:\n"
+        f"\"I couldn't find enough information in the available meeting records to answer this question.\""
+    )
+
+    return {
+        "system": RAG_SYSTEM_PROMPT,
+        "user": user_msg
+    }
