@@ -17,6 +17,7 @@ Milestone 2 Meeting Intelligence Routes:
 import os
 import uuid
 import logging
+from functools import wraps
 
 from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
@@ -65,10 +66,54 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 init_db()
 
 
-# ── Helpers ───────────────────────────────────────────────────────────────
+# ── Helpers & Authentication ───────────────────────────────────────────────
 
 def _allowed_file(filename: str, allowed_set: set) -> bool:
     return "." in filename and filename.rsplit(".", 1)[1].lower() in allowed_set
+
+
+def check_auth(req) -> bool:
+    """
+    Verify authentication credentials if authentication is enforced via environment.
+    Checks environment variable REQUIRE_AUTH ("true"/"1") or API_KEY / AUTH_TOKEN.
+    Accepts credentials via:
+      - Header: Authorization: Bearer <token>
+      - Header: X-API-Key: <key>
+      - Query param / form field / JSON body: api_key or token
+    If REQUIRE_AUTH is false and API_KEY is unset, requests are permitted by default.
+    """
+    require_auth = os.getenv("REQUIRE_AUTH", "false").lower() in ("true", "1", "yes")
+    expected_key = os.getenv("API_KEY") or os.getenv("AUTH_TOKEN")
+
+    if not require_auth and not expected_key:
+        return True
+
+    auth_header = req.headers.get("Authorization", "").strip()
+    provided_token = None
+    if auth_header.startswith("Bearer "):
+        provided_token = auth_header[7:].strip()
+
+    if not provided_token:
+        provided_token = req.headers.get("X-API-Key", "").strip()
+
+    if not provided_token:
+        json_data = req.get_json(silent=True) or {}
+        provided_token = req.args.get("api_key") or req.args.get("token") or req.form.get("api_key") or json_data.get("api_key")
+
+    if expected_key:
+        return provided_token == expected_key
+
+    return bool(provided_token)
+
+
+def require_authentication(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        if not check_auth(request):
+            logger.warning(f"Unauthorized access attempt to '{request.path}'")
+            return jsonify({"status": "error", "message": "Unauthorized access. Invalid or missing authentication credentials."}), 401
+        return f(*args, **kwargs)
+    return decorated
 
 
 def _run_pipeline(raw_text: str, ingestion_result: dict) -> dict:
@@ -207,6 +252,7 @@ def transcribe():
 
 @app.route("/meetings/process", methods=["POST"])
 @app.route("/api/meetings/process", methods=["POST"])
+@require_authentication
 def process_meeting_endpoint():
     """
     Process meeting recording or transcript:
@@ -254,6 +300,7 @@ def process_meeting_endpoint():
 
 @app.route("/meetings/<meeting_id>", methods=["GET"])
 @app.route("/api/meetings/<meeting_id>", methods=["GET"])
+@require_authentication
 def get_meeting_endpoint(meeting_id: str):
     """Retrieve processed meeting intelligence by meeting ID."""
     try:
@@ -269,6 +316,7 @@ def get_meeting_endpoint(meeting_id: str):
 
 @app.route("/meetings", methods=["GET"])
 @app.route("/api/meetings", methods=["GET"])
+@require_authentication
 def list_meetings_endpoint():
     """List all processed meetings."""
     try:
@@ -283,6 +331,7 @@ def list_meetings_endpoint():
 
 @app.route("/meetings/knowledge", methods=["GET"])
 @app.route("/api/meetings/knowledge", methods=["GET"])
+@require_authentication
 def get_all_meetings_knowledge_endpoint():
     """Retrieve full knowledge objects for all historical meetings."""
     try:
@@ -295,6 +344,7 @@ def get_all_meetings_knowledge_endpoint():
 
 @app.route("/meetings/<meeting_id>/transcript", methods=["GET"])
 @app.route("/api/meetings/<meeting_id>/transcript", methods=["GET"])
+@require_authentication
 def get_transcript_endpoint(meeting_id: str):
     """Retrieve transcript for a specific meeting."""
     try:
@@ -310,6 +360,7 @@ def get_transcript_endpoint(meeting_id: str):
 
 @app.route("/meetings/<meeting_id>/summary", methods=["GET"])
 @app.route("/api/meetings/<meeting_id>/summary", methods=["GET"])
+@require_authentication
 def get_summary_endpoint(meeting_id: str):
     """Retrieve summary for a specific meeting."""
     try:
@@ -325,6 +376,7 @@ def get_summary_endpoint(meeting_id: str):
 
 @app.route("/meetings/<meeting_id>/decisions", methods=["GET"])
 @app.route("/api/meetings/<meeting_id>/decisions", methods=["GET"])
+@require_authentication
 def get_decisions_endpoint(meeting_id: str):
     """Retrieve decisions for a specific meeting."""
     try:
@@ -339,6 +391,7 @@ def get_decisions_endpoint(meeting_id: str):
 
 @app.route("/meetings/<meeting_id>/action-items", methods=["GET"])
 @app.route("/api/meetings/<meeting_id>/action-items", methods=["GET"])
+@require_authentication
 def get_action_items_endpoint(meeting_id: str):
     """Retrieve action items for a specific meeting."""
     try:
@@ -353,6 +406,7 @@ def get_action_items_endpoint(meeting_id: str):
 
 @app.route("/meetings/<meeting_id>/participants", methods=["GET"])
 @app.route("/api/meetings/<meeting_id>/participants", methods=["GET"])
+@require_authentication
 def get_participants_endpoint(meeting_id: str):
     """Retrieve participants for a specific meeting."""
     try:
@@ -367,6 +421,7 @@ def get_participants_endpoint(meeting_id: str):
 
 @app.route("/meetings/<meeting_id>/deadlines", methods=["GET"])
 @app.route("/api/meetings/<meeting_id>/deadlines", methods=["GET"])
+@require_authentication
 def get_deadlines_endpoint(meeting_id: str):
     """Retrieve deadlines for a specific meeting."""
     try:
@@ -384,9 +439,12 @@ def get_deadlines_endpoint(meeting_id: str):
 semantic_search_service = SemanticSearchService()
 
 
+@app.route("/search", methods=["GET", "POST"])
+@app.route("/api/search", methods=["GET", "POST"])
 @app.route("/search/semantic", methods=["GET", "POST"])
 @app.route("/api/search/semantic", methods=["GET", "POST"])
 @app.route("/meetings/search/semantic", methods=["GET", "POST"])
+@require_authentication
 def semantic_search_endpoint():
     """
     Natural Language Semantic Search over Historical Meetings:
@@ -399,20 +457,41 @@ def semantic_search_endpoint():
     """
     try:
         if request.method == "POST":
-            data = request.get_json(silent=True) or request.form.to_dict()
+            data = request.get_json(silent=True) or request.form.to_dict() or {}
             query = data.get("query") or data.get("q") or ""
-            top_k = int(data.get("top_k", 5))
+            try:
+                top_k = int(data.get("top_k", 5))
+            except (ValueError, TypeError):
+                return jsonify({"status": "error", "message": "Invalid top_k parameter. Must be an integer."}), 400
             content_type = data.get("content_type")
             meeting_id = data.get("meeting_id")
-            deduplicate = str(data.get("deduplicate", "false")).lower() == "true"
+            start_date = data.get("start_date") or data.get("from_date")
+            end_date = data.get("end_date") or data.get("to_date")
+            min_score = float(data["min_score"]) if data.get("min_score") is not None else None
+            deduplicate = str(data.get("deduplicate", "false")).lower() in ("true", "1")
         else:
             query = request.args.get("query") or request.args.get("q") or ""
-            top_k = int(request.args.get("top_k", 5))
+            try:
+                top_k = int(request.args.get("top_k", 5))
+            except (ValueError, TypeError):
+                return jsonify({"status": "error", "message": "Invalid top_k parameter. Must be an integer."}), 400
             content_type = request.args.get("content_type")
             meeting_id = request.args.get("meeting_id")
-            deduplicate = request.args.get("deduplicate", "false").lower() == "true"
+            start_date = request.args.get("start_date") or request.args.get("from_date")
+            end_date = request.args.get("end_date") or request.args.get("to_date")
+            min_score = float(request.args["min_score"]) if request.args.get("min_score") is not None else None
+            deduplicate = request.args.get("deduplicate", "false").lower() in ("true", "1")
 
-        if not query or not query.strip():
+        query_clean = str(query).strip() if query else ""
+
+        # Log Search Request (without credentials)
+        logger.info(
+            f"[SEARCH REQUEST] Method: {request.method} | Path: {request.path} | "
+            f"Query: '{query_clean[:100]}' | top_k: {top_k} | content_type: {content_type} | meeting_id: {meeting_id}"
+        )
+
+        if not query_clean:
+            logger.info("[SEARCH COMPLETED] Empty search query provided. Returning empty result set.")
             return jsonify({
                 "status": "ok",
                 "query": "",
@@ -422,15 +501,26 @@ def semantic_search_endpoint():
             }), 200
 
         res = semantic_search_service.search(
-            query=query,
+            query=query_clean,
             top_k=top_k,
             meeting_id=meeting_id,
             content_type=content_type,
-            deduplicate=deduplicate
+            start_date=start_date,
+            end_date=end_date,
+            min_score=min_score,
+            deduplicate=deduplicate,
+            db_path=os.getenv("DATABASE_PATH")
+        )
+
+        # Log Search Completion and Latency
+        logger.info(
+            f"[SEARCH COMPLETED] Query: '{query_clean[:100]}' | "
+            f"Results Count: {res.get('total_results', 0)} | Latency: {res.get('latency_ms', 0.0)}ms"
         )
         return jsonify(res), 200
+
     except Exception as exc:
-        logger.exception("Semantic search error")
+        logger.exception("[SEARCH FAILURE] Error executing semantic search")
         return jsonify({"status": "error", "message": f"Search failed: {exc}"}), 500
 
 
@@ -439,33 +529,55 @@ def semantic_search_endpoint():
 rag_service = RAGService(semantic_search_service=semantic_search_service)
 
 
+@app.route("/ask", methods=["GET", "POST"])
+@app.route("/api/ask", methods=["GET", "POST"])
 @app.route("/search/rag", methods=["GET", "POST"])
 @app.route("/api/search/rag", methods=["GET", "POST"])
 @app.route("/meetings/search/rag", methods=["GET", "POST"])
 @app.route("/api/meetings/qa", methods=["GET", "POST"])
+@require_authentication
 def rag_qa_endpoint():
     """
     Retrieval-Augmented Generation (RAG) Grounded Question Answering:
     Accepts JSON body or query params:
-      - question / q: str
+      - question / q / query: str
       - top_k: int (default 5)
       - content_type: str (optional)
       - meeting_id: str (optional)
     """
     try:
         if request.method == "POST":
-            data = request.get_json(silent=True) or request.form.to_dict()
-            question = data.get("question") or data.get("q") or ""
-            top_k = int(data.get("top_k", 5))
+            data = request.get_json(silent=True) or request.form.to_dict() or {}
+            question = data.get("question") or data.get("q") or data.get("query") or ""
+            try:
+                top_k = int(data.get("top_k", 5))
+            except (ValueError, TypeError):
+                return jsonify({"status": "error", "message": "Invalid top_k parameter. Must be an integer."}), 400
             content_type = data.get("content_type")
             meeting_id = data.get("meeting_id")
+            start_date = data.get("start_date") or data.get("from_date")
+            end_date = data.get("end_date") or data.get("to_date")
         else:
-            question = request.args.get("question") or request.args.get("q") or ""
-            top_k = int(request.args.get("top_k", 5))
+            question = request.args.get("question") or request.args.get("q") or request.args.get("query") or ""
+            try:
+                top_k = int(request.args.get("top_k", 5))
+            except (ValueError, TypeError):
+                return jsonify({"status": "error", "message": "Invalid top_k parameter. Must be an integer."}), 400
             content_type = request.args.get("content_type")
             meeting_id = request.args.get("meeting_id")
+            start_date = request.args.get("start_date") or request.args.get("from_date")
+            end_date = request.args.get("end_date") or request.args.get("to_date")
 
-        if not question or not question.strip():
+        q_clean = str(question).strip() if question else ""
+
+        # Log RAG Request (without credentials)
+        logger.info(
+            f"[RAG REQUEST] Method: {request.method} | Path: {request.path} | "
+            f"Question: '{q_clean[:100]}' | top_k: {top_k} | content_type: {content_type} | meeting_id: {meeting_id}"
+        )
+
+        if not q_clean:
+            logger.info("[RAG COMPLETED] Empty question prompt provided. Returning default fallback answer.")
             return jsonify({
                 "status": "ok",
                 "question": "",
@@ -476,14 +588,24 @@ def rag_qa_endpoint():
             }), 200
 
         res = rag_service.answer_question(
-            question=question,
+            question=q_clean,
             top_k=top_k,
             meeting_id=meeting_id,
-            content_type=content_type
+            content_type=content_type,
+            start_date=start_date,
+            end_date=end_date,
+            db_path=os.getenv("DATABASE_PATH")
+        )
+
+        # Log RAG Completion and Latency
+        logger.info(
+            f"[RAG COMPLETED] Question: '{q_clean[:100]}' | "
+            f"Context Chunks Used: {res.get('context_chunks_used', 0)} | Latency: {res.get('latency_ms', 0.0)}ms"
         )
         return jsonify(res), 200
+
     except Exception as exc:
-        logger.exception("RAG Q&A error")
+        logger.exception("[RAG FAILURE] Error executing RAG question answering")
         return jsonify({"status": "error", "message": f"RAG Q&A failed: {exc}"}), 500
 
 

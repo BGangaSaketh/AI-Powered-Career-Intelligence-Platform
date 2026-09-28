@@ -50,6 +50,8 @@ class RAGService:
         top_k: int = 5,
         meeting_id: Optional[str] = None,
         content_type: Optional[str] = None,
+        start_date: Optional[str] = None,
+        end_date: Optional[str] = None,
         db_path: Optional[str] = None,
         similarity_threshold: float = 0.05
     ) -> Dict[str, Any]:
@@ -66,6 +68,10 @@ class RAGService:
             Filter context retrieval to a specific meeting.
         content_type : str, optional
             Filter context retrieval to a specific content type ("summary", "transcript", "decision", "action_item").
+        start_date : str, optional
+            Filter search space to meetings on or after this ISO date string (YYYY-MM-DD).
+        end_date : str, optional
+            Filter search space to meetings on or before this ISO date string (YYYY-MM-DD).
         db_path : str, optional
             Database path.
         similarity_threshold : float
@@ -90,21 +96,39 @@ class RAGService:
                 "context_chunks_used": 0
             }
 
-        # 1. Semantic Retrieval
+        # 1. Semantic Retrieval (deduplicated per meeting to isolate top-matching meeting evidence)
         search_res = self.semantic_search_service.search(
             query=q_str,
             top_k=top_k,
             meeting_id=meeting_id,
             content_type=content_type,
+            start_date=start_date,
+            end_date=end_date,
+            deduplicate=True,
             db_path=db_path
         )
 
         hits = search_res.get("results", [])
 
+        if not hits:
+            latency_ms = round((time.perf_counter() - t_start) * 1000, 2)
+            return {
+                "status": "ok",
+                "question": q_str,
+                "answer": FALLBACK_NO_INFO_ANSWER,
+                "sources": [],
+                "latency_ms": latency_ms,
+                "context_chunks_used": 0
+            }
+
+        top_score = hits[0].get("similarity") or hits[0].get("score") or 0.0
+        # Require score to be at least similarity_threshold and within 35% of the top match
+        effective_threshold = max(similarity_threshold, top_score * 0.35)
+
         # Filter hits by similarity threshold
         valid_hits = [
             h for h in hits
-            if (h.get("similarity") or h.get("score") or 0.0) >= similarity_threshold
+            if (h.get("similarity") or h.get("score") or 0.0) >= effective_threshold
             and (h.get("relevant_snippet") or h.get("text") or "").strip()
         ]
 

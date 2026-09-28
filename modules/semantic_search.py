@@ -15,7 +15,7 @@ import time
 import logging
 from typing import Dict, Any, List, Optional
 
-from modules.embedding_service import EmbeddingService
+from modules.embedding_service import EmbeddingService, HashEmbeddingProvider
 from modules.vector_store import VectorStoreService
 from modules.database import get_meeting_metadata
 
@@ -42,6 +42,9 @@ class SemanticSearchService:
         top_k: int = 5,
         meeting_id: Optional[str] = None,
         content_type: Optional[str] = None,
+        start_date: Optional[str] = None,
+        end_date: Optional[str] = None,
+        min_score: Optional[float] = None,
         deduplicate: bool = False,
         db_path: Optional[str] = None
     ) -> Dict[str, Any]:
@@ -58,6 +61,12 @@ class SemanticSearchService:
             Filter search space to a specific meeting.
         content_type : str, optional
             Filter search space to a specific content type ("summary", "transcript", "decision", "action_item").
+        start_date : str, optional
+            Filter search space to meetings on or after this ISO date string (YYYY-MM-DD).
+        end_date : str, optional
+            Filter search space to meetings on or before this ISO date string (YYYY-MM-DD).
+        min_score : float, optional
+            Minimum relevance similarity score threshold.
         deduplicate : bool
             If True, returns only the single highest-scoring snippet per meeting.
         db_path : str, optional
@@ -94,16 +103,45 @@ class SemanticSearchService:
             }
 
         # 2. Perform Vector Similarity Search
-        fetch_limit = top_k * 3 if deduplicate else top_k
-        raw_hits = self.vector_store.similarity_search(
-            query_vector=query_vec,
-            top_k=fetch_limit,
-            meeting_id=meeting_id,
-            content_type=content_type,
-            db_path=db_path
-        )
+        fetch_limit = top_k * 5 if (deduplicate or start_date or end_date) else top_k
+        try:
+            raw_hits = self.vector_store.similarity_search(
+                query_vector=query_vec,
+                top_k=fetch_limit,
+                meeting_id=meeting_id,
+                content_type=content_type,
+                db_path=db_path
+            )
+        except Exception as exc:
+            logger.error(f"Vector Database Error during search: {exc}")
+            latency_ms = round((time.perf_counter() - t_start) * 1000, 2)
+            return {
+                "status": "ok",
+                "query": query_str,
+                "latency_ms": latency_ms,
+                "total_results": 0,
+                "results": []
+            }
 
-        # 3. Enrich with Meeting Metadata
+        # Smart Embedding Provider Fallback Alignment:
+        # If top score is low (< 0.4), check if DB records were created with feature hash embeddings
+        top_score = raw_hits[0].get("score", 0.0) if raw_hits else 0.0
+        if top_score < 0.4 and getattr(self.embedding_service, "provider_name", "") != "hash":
+            dim = len(query_vec) if query_vec else 384
+            hash_provider = HashEmbeddingProvider(dimension=dim)
+            hash_query_vec = hash_provider.embed_text(query_str)
+            if hash_query_vec:
+                hash_hits = self.vector_store.similarity_search(
+                    query_vector=hash_query_vec,
+                    top_k=fetch_limit,
+                    meeting_id=meeting_id,
+                    content_type=content_type,
+                    db_path=db_path
+                )
+                if hash_hits and hash_hits[0].get("score", 0.0) > top_score:
+                    raw_hits = hash_hits
+
+        # 3. Enrich with Meeting Metadata & Apply Metadata/Date Filters
         enriched_results = []
         seen_meetings = set()
 
@@ -112,11 +150,29 @@ class SemanticSearchService:
             if deduplicate and m_id in seen_meetings:
                 continue
 
+            # Minimum Similarity Score Filter
+            score_val = hit.get("score", 0.0)
+            if min_score is not None and score_val < min_score:
+                continue
+
             meta = get_meeting_metadata(m_id, db_path=db_path) if m_id else None
 
             title = meta.get("title", "Meeting") if meta else "Meeting"
             created_at = meta.get("created_at", "") if meta else ""
             summary = meta.get("summary", "") if meta else ""
+
+            # Date Range Filtering
+            if start_date and str(start_date).strip():
+                s_date = str(start_date).strip()[:10]
+                m_date = str(created_at).strip()[:10] if created_at else ""
+                if m_date and m_date < s_date:
+                    continue
+
+            if end_date and str(end_date).strip():
+                e_date = str(end_date).strip()[:10]
+                m_date = str(created_at).strip()[:10] if created_at else ""
+                if m_date and m_date > e_date:
+                    continue
 
             item = {
                 "meeting_id": m_id,
@@ -129,8 +185,8 @@ class SemanticSearchService:
                 "content_type": hit.get("content_type", "unknown"),
                 "source_id": hit.get("source_id"),
                 "chunk_index": hit.get("chunk_index", 0),
-                "similarity": hit.get("score", 0.0),
-                "score": hit.get("score", 0.0),
+                "similarity": score_val,
+                "score": score_val,
                 "vector_id": hit.get("id")
             }
 

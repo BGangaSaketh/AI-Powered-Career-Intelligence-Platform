@@ -28,6 +28,7 @@ from modules.transcription import transcribe_file
 from modules.llm_service import LLMService, LLMServiceError
 from modules.long_transcript import process_long_transcript
 from modules.database import save_meeting, get_meeting
+from modules.embedding_service import generate_meeting_embeddings
 
 logger = logging.getLogger(__name__)
 
@@ -98,7 +99,13 @@ def process_meeting_input(
         db_path=db_path
     )
 
-    # 4. Construct Final Response Payload
+    # 4. Generate & Store Vector Embeddings for Semantic Search and RAG
+    try:
+        generate_meeting_embeddings(meeting_id, db_path=db_path)
+    except Exception as exc:
+        logger.warning(f"Could not generate embeddings for meeting '{meeting_id}': {exc}")
+
+    # 5. Construct Final Response Payload
     return {
         "status": "ok",
         "meeting_id": meeting_id,

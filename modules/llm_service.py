@@ -175,7 +175,11 @@ class LLMService:
             evidence_summary = " ".join(context_lines)
             
             # Anti-hallucination relevance check: if query has specific keywords absent in evidence, return fallback
-            stop_words = {"what", "when", "who", "which", "where", "how", "is", "was", "the", "a", "an", "for", "to", "in", "on", "of", "about", "assigned", "decided", "meeting", "discussed", "action", "items"}
+            stop_words = {
+                "what", "when", "who", "which", "where", "how", "why", "is", "was", "were", "are",
+                "the", "a", "an", "for", "to", "in", "on", "of", "about", "with", "by", "from",
+                "assigned", "decided", "approved", "meeting", "discussed", "action", "items", "task", "project", "deadline", "schedule"
+            }
             q_words = set(re.findall(r"\w+", question)) - stop_words
             if q_words and not any(w in evidence_summary.lower() for w in q_words):
                 return "I couldn't find enough information in the available meeting records to answer this question."
