@@ -53,34 +53,11 @@ class RAGService:
         start_date: Optional[str] = None,
         end_date: Optional[str] = None,
         db_path: Optional[str] = None,
-        similarity_threshold: float = 0.05
+        similarity_threshold: float = 0.05,
+        user_id: Optional[str] = None
     ) -> Dict[str, Any]:
         """
-        Execute full Grounded RAG pipeline for a user question.
-
-        Parameters
-        ----------
-        question : str
-            Natural language question prompt.
-        top_k : int
-            Maximum number of context chunks to retrieve.
-        meeting_id : str, optional
-            Filter context retrieval to a specific meeting.
-        content_type : str, optional
-            Filter context retrieval to a specific content type ("summary", "transcript", "decision", "action_item").
-        start_date : str, optional
-            Filter search space to meetings on or after this ISO date string (YYYY-MM-DD).
-        end_date : str, optional
-            Filter search space to meetings on or before this ISO date string (YYYY-MM-DD).
-        db_path : str, optional
-            Database path.
-        similarity_threshold : float
-            Minimum similarity score required to include a context chunk.
-
-        Returns
-        -------
-        Dict[str, Any]
-            RAG response payload containing answer, sources, latency_ms, and context count.
+        Execute full Grounded RAG pipeline for a user question restricted to user_id.
         """
         t_start = time.perf_counter()
         q_str = (question or "").strip()
@@ -104,8 +81,9 @@ class RAGService:
             content_type=content_type,
             start_date=start_date,
             end_date=end_date,
-            deduplicate=True,
-            db_path=db_path
+            deduplicate=False,
+            db_path=db_path,
+            user_id=user_id
         )
 
         hits = search_res.get("results", [])
@@ -121,16 +99,17 @@ class RAGService:
                 "context_chunks_used": 0
             }
 
-        top_score = hits[0].get("similarity") or hits[0].get("score") or 0.0
+        top_score = hits[0].get("similarity_score") or hits[0].get("similarity") or hits[0].get("score") or 0.0
         # Require score to be at least similarity_threshold and within 35% of the top match
         effective_threshold = max(similarity_threshold, top_score * 0.35)
 
         # Filter hits by similarity threshold
         valid_hits = [
             h for h in hits
-            if (h.get("similarity") or h.get("score") or 0.0) >= effective_threshold
+            if (h.get("similarity_score") or h.get("similarity") or h.get("score") or 0.0) >= effective_threshold
             and (h.get("relevant_snippet") or h.get("text") or "").strip()
         ]
+
 
         if not valid_hits:
             latency_ms = round((time.perf_counter() - t_start) * 1000, 2)

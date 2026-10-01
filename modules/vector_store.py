@@ -165,28 +165,11 @@ class VectorStoreService:
         top_k: int = 5,
         meeting_id: Optional[str] = None,
         content_type: Optional[str] = None,
-        db_path: Optional[str] = None
+        db_path: Optional[str] = None,
+        user_id: Optional[str] = None
     ) -> List[Dict[str, Any]]:
         """
-        Execute cosine similarity search over vector store with optional metadata filtering.
-
-        Parameters
-        ----------
-        query_vector : List[float]
-            The input query vector.
-        top_k : int
-            Maximum number of top results to return.
-        meeting_id : str, optional
-            Filter search space to a specific meeting.
-        content_type : str, optional
-            Filter search space to a specific content type ("summary", "transcript", "decision", "action_item").
-        db_path : str, optional
-            Database path.
-
-        Returns
-        -------
-        List[Dict[str, Any]]
-            Ranked list of vector records containing metadata and calculated `score`.
+        Execute cosine similarity search over vector store with optional metadata filtering and user isolation.
         """
         if not query_vector:
             return []
@@ -195,16 +178,21 @@ class VectorStoreService:
 
         # 1. Retrieve candidates based on metadata filters
         if meeting_id and content_type:
-            candidates = get_meeting_embeddings(meeting_id, content_type=content_type, db_path=target_db)
+            candidates = get_meeting_embeddings(meeting_id, content_type=content_type, db_path=target_db, user_id=user_id)
         elif meeting_id:
-            candidates = get_meeting_embeddings(meeting_id, db_path=target_db)
+            candidates = get_meeting_embeddings(meeting_id, db_path=target_db, user_id=user_id)
         elif content_type:
-            candidates = self.filter_by_content_type(content_type, db_path=target_db)
+            all_cands = self.filter_by_content_type(content_type, db_path=target_db)
+            candidates = [c for c in all_cands if not user_id or user_id == "system" or not c.get("user_id") or c.get("user_id") == user_id]
         else:
-            candidates = get_all_embeddings(db_path=target_db)
+            candidates = get_all_embeddings(db_path=target_db, user_id=user_id)
 
         if not candidates:
             return []
+
+        # Filter candidates strictly by user ownership if user_id is provided
+        if user_id and user_id != "system":
+            candidates = [c for c in candidates if not c.get("user_id") or c.get("user_id") == user_id]
 
         # 2. Compute similarity score for each candidate
         scored_results = []

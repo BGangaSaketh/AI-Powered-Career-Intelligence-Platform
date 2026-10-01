@@ -19,7 +19,7 @@ import uuid
 import logging
 from functools import wraps
 
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, request, jsonify, render_template, Response, g
 from flask_cors import CORS
 from werkzeug.utils import secure_filename
 
@@ -29,6 +29,8 @@ from modules.preprocessing  import preprocess
 from modules.sentiment      import analyze_sentiment
 from modules.reporting      import generate_report
 from modules.transcription  import transcribe_file
+from modules.report_generator import generate_meeting_pdf_report, generate_meeting_csv_report
+
 
 # Milestone 2 & Milestone 3 Modules
 from modules.meeting_service import process_meeting_input
@@ -43,10 +45,19 @@ from modules.database import (
     get_meeting_action_items,
     get_meeting_participants,
     get_meeting_deadlines,
-    get_all_meetings_knowledge
+    get_all_meetings_knowledge,
+    create_user,
+    authenticate_user,
+    get_user_by_token,
+    get_user_by_id,
+    invalidate_user_token
 )
 from modules.semantic_search import SemanticSearchService
 from modules.rag_service import RAGService
+from modules.zoom_service import ZoomService, ZoomAuthError, ZoomApiError
+from modules.google_meet_service import GoogleMeetService, GoogleAuthError, GoogleApiError
+
+
 
 # ── App setup ─────────────────────────────────────────────────────────────
 app = Flask(__name__)
@@ -74,19 +85,15 @@ def _allowed_file(filename: str, allowed_set: set) -> bool:
 
 def check_auth(req) -> bool:
     """
-    Verify authentication credentials if authentication is enforced via environment.
+    Verify authentication credentials and populate Flask g.user and g.user_id.
     Checks environment variable REQUIRE_AUTH ("true"/"1") or API_KEY / AUTH_TOKEN.
     Accepts credentials via:
       - Header: Authorization: Bearer <token>
       - Header: X-API-Key: <key>
       - Query param / form field / JSON body: api_key or token
-    If REQUIRE_AUTH is false and API_KEY is unset, requests are permitted by default.
     """
     require_auth = os.getenv("REQUIRE_AUTH", "false").lower() in ("true", "1", "yes")
     expected_key = os.getenv("API_KEY") or os.getenv("AUTH_TOKEN")
-
-    if not require_auth and not expected_key:
-        return True
 
     auth_header = req.headers.get("Authorization", "").strip()
     provided_token = None
@@ -98,12 +105,34 @@ def check_auth(req) -> bool:
 
     if not provided_token:
         json_data = req.get_json(silent=True) or {}
-        provided_token = req.args.get("api_key") or req.args.get("token") or req.form.get("api_key") or json_data.get("api_key")
+        provided_token = req.args.get("api_key") or req.args.get("token") or req.form.get("api_key") or json_data.get("api_key") or json_data.get("token")
 
-    if expected_key:
-        return provided_token == expected_key
+    g.user = None
+    g.user_id = None
 
-    return bool(provided_token)
+    if provided_token:
+        user_record = get_user_by_token(provided_token)
+        if user_record:
+            g.user = user_record
+            g.user_id = user_record["id"]
+            return True
+        elif expected_key and provided_token == expected_key:
+            g.user = {"id": "system", "username": "system_admin"}
+            g.user_id = "system"
+            return True
+        elif not require_auth and not expected_key:
+            g.user = {"id": "system", "username": "system_admin"}
+            g.user_id = "system"
+            return True
+        else:
+            return False
+
+    if not require_auth and not expected_key:
+        g.user = {"id": "system", "username": "default_user"}
+        g.user_id = "system"
+        return True
+
+    return False
 
 
 def require_authentication(f):
@@ -142,6 +171,106 @@ def _run_pipeline(raw_text: str, ingestion_result: dict) -> dict:
             "per_sentence": sentiment_result.get("per_sentence", []),
         },
     }
+
+
+# ── User Authentication Routes ──────────────────────────────────────────────
+
+@app.route("/auth/register", methods=["POST"])
+@app.route("/api/auth/register", methods=["POST"])
+def register_endpoint():
+    """Register a new user account."""
+    try:
+        data = request.get_json(silent=True) or request.form.to_dict() or {}
+        username = data.get("username") or ""
+        email = data.get("email") or ""
+        password = data.get("password") or ""
+
+        if not username or not email or not password:
+            return jsonify({"status": "error", "message": "Username, email, and password parameters are required."}), 400
+
+        user_info = create_user(username=username, email=email, password=password)
+        return jsonify({
+            "status": "ok",
+            "message": "User registered successfully.",
+            "user": {
+                "id": user_info["id"],
+                "username": user_info["username"],
+                "email": user_info["email"],
+                "created_at": user_info["created_at"]
+            },
+            "token": user_info["token"]
+        }), 201
+
+    except ValueError as val_err:
+        return jsonify({"status": "error", "message": str(val_err)}), 400
+    except Exception as exc:
+        logger.exception("User registration error")
+        return jsonify({"status": "error", "message": f"Registration failed: {exc}"}), 500
+
+
+@app.route("/auth/login", methods=["POST"])
+@app.route("/api/auth/login", methods=["POST"])
+def login_endpoint():
+    """Authenticate user credentials and return access token."""
+    try:
+        data = request.get_json(silent=True) or request.form.to_dict() or {}
+        username_or_email = data.get("username") or data.get("email") or data.get("username_or_email") or ""
+        password = data.get("password") or ""
+
+        if not username_or_email or not password:
+            return jsonify({"status": "error", "message": "Username/email and password parameters are required."}), 400
+
+        user_info = authenticate_user(username_or_email=username_or_email, password=password)
+        if not user_info:
+            return jsonify({"status": "error", "message": "Invalid username/email or password."}), 401
+
+        return jsonify({
+            "status": "ok",
+            "message": "Login successful.",
+            "user": {
+                "id": user_info["id"],
+                "username": user_info["username"],
+                "email": user_info["email"],
+                "created_at": user_info["created_at"]
+            },
+            "token": user_info["token"]
+        }), 200
+
+    except Exception as exc:
+        logger.exception("User login error")
+        return jsonify({"status": "error", "message": f"Login failed: {exc}"}), 500
+
+
+@app.route("/auth/logout", methods=["POST"])
+@app.route("/api/auth/logout", methods=["POST"])
+def logout_endpoint():
+    """Invalidate session token."""
+    try:
+        auth_header = request.headers.get("Authorization", "").strip()
+        token = None
+        if auth_header.startswith("Bearer "):
+            token = auth_header[7:].strip()
+        if not token:
+            token = request.headers.get("X-API-Key", "").strip()
+        if not token:
+            data = request.get_json(silent=True) or {}
+            token = request.args.get("token") or data.get("token")
+
+        if token:
+            invalidate_user_token(token)
+
+        return jsonify({"status": "ok", "message": "Successfully logged out."}), 200
+    except Exception as exc:
+        logger.exception("User logout error")
+        return jsonify({"status": "error", "message": f"Logout failed: {exc}"}), 500
+
+
+@app.route("/auth/me", methods=["GET"])
+@app.route("/api/auth/me", methods=["GET"])
+@require_authentication
+def get_current_user_endpoint():
+    """Retrieve profile of currently authenticated user."""
+    return jsonify({"status": "ok", "user": g.user}), 200
 
 
 # ── Milestone 1 Routes ─────────────────────────────────────────────────────
@@ -282,10 +411,12 @@ def process_meeting_endpoint():
         return jsonify({"status": "error", "message": "Provide an audio/video file or transcript text."}), 400
 
     try:
+        user_id = getattr(g, "user_id", None)
         result = process_meeting_input(
             file_path=save_path,
             raw_transcript_input=raw_transcript,
-            title=title
+            title=title,
+            user_id=user_id
         )
         return jsonify(result), 200
     except ValueError as val_err:
@@ -304,8 +435,11 @@ def process_meeting_endpoint():
 def get_meeting_endpoint(meeting_id: str):
     """Retrieve processed meeting intelligence by meeting ID."""
     try:
-        meeting_data = get_meeting(meeting_id)
+        user_id = getattr(g, "user_id", None)
+        meeting_data = get_meeting(meeting_id, user_id=user_id)
         if not meeting_data:
+            if get_meeting(meeting_id):
+                return jsonify({"status": "error", "message": f"Access denied. Meeting '{meeting_id}' belongs to another user."}), 403
             return jsonify({"status": "error", "message": f"Meeting '{meeting_id}' not found."}), 404
         meeting_data["status"] = "ok"
         return jsonify(meeting_data), 200
@@ -318,13 +452,197 @@ def get_meeting_endpoint(meeting_id: str):
 @app.route("/api/meetings", methods=["GET"])
 @require_authentication
 def list_meetings_endpoint():
-    """List all processed meetings."""
+    """List all processed meetings for authenticated user."""
     try:
-        meetings = list_meetings()
+        user_id = getattr(g, "user_id", None)
+        meetings = list_meetings(user_id=user_id)
         return jsonify({"status": "ok", "meetings": meetings}), 200
     except Exception as exc:
         logger.exception("Error listing meetings")
         return jsonify({"status": "error", "message": str(exc)}), 500
+
+
+# ── Milestone 4 Zoom Integration Routes ────────────────────────────────────
+
+zoom_service = ZoomService()
+
+
+@app.route("/zoom/recordings", methods=["GET"])
+@app.route("/api/zoom/recordings", methods=["GET"])
+@require_authentication
+def list_zoom_recordings_endpoint():
+    """List available Zoom cloud recordings."""
+    try:
+        from_date = request.args.get("from_date") or request.args.get("from")
+        to_date = request.args.get("to_date") or request.args.get("to")
+        user_id = request.args.get("user_id", "me")
+        
+        recordings = zoom_service.list_cloud_recordings(user_id=user_id, from_date=from_date, to_date=to_date)
+        return jsonify({"status": "ok", "recordings": recordings}), 200
+    except ZoomAuthError as auth_err:
+        return jsonify({"status": "error", "message": f"Zoom Auth Error: {auth_err}"}), 401
+    except Exception as exc:
+        logger.exception("Error listing Zoom recordings")
+        return jsonify({"status": "error", "message": f"Zoom retrieval failed: {exc}"}), 500
+
+
+@app.route("/zoom/import", methods=["POST"])
+@app.route("/api/zoom/import", methods=["POST"])
+@require_authentication
+def import_zoom_recording_endpoint():
+    """Import a specific Zoom cloud recording into the processing pipeline."""
+    try:
+        data = request.get_json(silent=True) or request.form.to_dict() or {}
+        recording_id = data.get("recording_id") or data.get("meeting_id")
+        download_url = data.get("download_url")
+        title = data.get("title")
+
+        if not recording_id:
+            return jsonify({"status": "error", "message": "recording_id parameter is required."}), 400
+
+        result = zoom_service.import_zoom_recording(
+            recording_id=recording_id,
+            download_url=download_url,
+            title=title
+        )
+        return jsonify(result), 200
+    except ZoomAuthError as auth_err:
+        return jsonify({"status": "error", "message": f"Zoom Auth Error: {auth_err}"}), 401
+    except ValueError as val_err:
+        return jsonify({"status": "error", "message": str(val_err)}), 400
+    except Exception as exc:
+        logger.exception("Error importing Zoom recording")
+        return jsonify({"status": "error", "message": f"Zoom import failed: {exc}"}), 500
+
+
+@app.route("/zoom/webhook", methods=["POST"])
+@app.route("/api/zoom/webhook", methods=["POST"])
+def zoom_webhook_endpoint():
+    """Handle Zoom Cloud Recording Completed webhooks and URL validation challenges."""
+    try:
+        payload = request.get_json(silent=True) or {}
+        event = payload.get("event")
+
+        # 1. URL Validation Challenge
+        if event == "endpoint.url_validation" or "plainToken" in payload.get("payload", {}):
+            plain_token = payload.get("payload", {}).get("plainToken") or request.args.get("plainToken")
+            res_payload = zoom_service.validate_webhook_url(plain_token)
+            return jsonify(res_payload), 200
+
+        # 2. Recording Completed Event
+        if event == "recording.completed":
+            object_data = payload.get("payload", {}).get("object", {})
+            recording_id = str(object_data.get("id") or object_data.get("uuid"))
+            topic = object_data.get("topic")
+
+            if recording_id:
+                logger.info(f"Received Zoom recording.completed webhook for meeting '{recording_id}'. Processing...")
+                res = zoom_service.import_zoom_recording(recording_id=recording_id, title=topic)
+                return jsonify({"status": "ok", "message": "Webhook processed.", "result": res}), 200
+
+        return jsonify({"status": "ok", "message": "Event ignored."}), 200
+
+    except Exception as exc:
+        logger.exception("Error handling Zoom webhook")
+        return jsonify({"status": "error", "message": f"Webhook error: {exc}"}), 500
+
+
+# ── Milestone 4 Google Meet Integration Routes ──────────────────────────────
+
+google_meet_service = GoogleMeetService()
+
+
+@app.route("/google/recordings", methods=["GET"])
+@app.route("/api/google/recordings", methods=["GET"])
+@require_authentication
+def list_google_recordings_endpoint():
+    """List available Google Meet cloud recordings from Google Drive."""
+    try:
+        folder_id = request.args.get("folder_id")
+        recordings = google_meet_service.list_meet_recordings(folder_id=folder_id)
+        return jsonify({"status": "ok", "recordings": recordings}), 200
+    except GoogleAuthError as auth_err:
+        return jsonify({"status": "error", "message": f"Google Auth Error: {auth_err}"}), 401
+    except Exception as exc:
+        logger.exception("Error listing Google Meet recordings")
+        return jsonify({"status": "error", "message": f"Google Meet retrieval failed: {exc}"}), 500
+
+
+@app.route("/google/import", methods=["POST"])
+@app.route("/api/google/import", methods=["POST"])
+@require_authentication
+def import_google_recording_endpoint():
+    """Import a specific Google Meet cloud recording into the processing pipeline."""
+    try:
+        data = request.get_json(silent=True) or request.form.to_dict() or {}
+        file_id = data.get("file_id") or data.get("recording_id")
+        title = data.get("title")
+
+        if not file_id:
+            return jsonify({"status": "error", "message": "file_id parameter is required."}), 400
+
+        result = google_meet_service.import_google_meet_recording(file_id=file_id, title=title)
+        return jsonify(result), 200
+    except GoogleAuthError as auth_err:
+        return jsonify({"status": "error", "message": f"Google Auth Error: {auth_err}"}), 401
+    except ValueError as val_err:
+        return jsonify({"status": "error", "message": str(val_err)}), 400
+    except Exception as exc:
+        logger.exception("Error importing Google Meet recording")
+        return jsonify({"status": "error", "message": f"Google Meet import failed: {exc}"}), 500
+
+@app.route("/meetings/<meeting_id>/export/pdf", methods=["GET"])
+@app.route("/api/meetings/<meeting_id>/export/pdf", methods=["GET"])
+@require_authentication
+def export_meeting_pdf_endpoint(meeting_id: str):
+    """Generate and download PDF executive report for a specific meeting."""
+    try:
+        user_id = getattr(g, "user_id", None)
+        meeting_data = get_meeting(meeting_id, user_id=user_id)
+        if not meeting_data:
+            if get_meeting(meeting_id):
+                return jsonify({"status": "error", "message": f"Access denied. Meeting '{meeting_id}' belongs to another user."}), 403
+            return jsonify({"status": "error", "message": f"Meeting '{meeting_id}' not found."}), 404
+        
+        pdf_bytes = generate_meeting_pdf_report(meeting_data)
+        safe_title = "".join(c for c in meeting_data.get("title", "meeting") if c.isalnum() or c in (" ", "_", "-")).strip().replace(" ", "_")
+        filename = f"report_{meeting_id}_{safe_title}.pdf"
+
+        return Response(
+            pdf_bytes,
+            mimetype="application/pdf",
+            headers={"Content-Disposition": f"attachment; filename={filename}"}
+        )
+    except Exception as exc:
+        logger.exception(f"Error generating PDF report for meeting '{meeting_id}'")
+        return jsonify({"status": "error", "message": f"PDF report generation failed: {exc}"}), 500
+
+
+@app.route("/meetings/<meeting_id>/export/csv", methods=["GET"])
+@app.route("/api/meetings/<meeting_id>/export/csv", methods=["GET"])
+@require_authentication
+def export_meeting_csv_endpoint(meeting_id: str):
+    """Generate and download CSV report for a specific meeting."""
+    try:
+        user_id = getattr(g, "user_id", None)
+        meeting_data = get_meeting(meeting_id, user_id=user_id)
+        if not meeting_data:
+            if get_meeting(meeting_id):
+                return jsonify({"status": "error", "message": f"Access denied. Meeting '{meeting_id}' belongs to another user."}), 403
+            return jsonify({"status": "error", "message": f"Meeting '{meeting_id}' not found."}), 404
+        
+        csv_str = generate_meeting_csv_report(meeting_data)
+        safe_title = "".join(c for c in meeting_data.get("title", "meeting") if c.isalnum() or c in (" ", "_", "-")).strip().replace(" ", "_")
+        filename = f"report_{meeting_id}_{safe_title}.csv"
+
+        return Response(
+            csv_str,
+            mimetype="text/csv",
+            headers={"Content-Disposition": f"attachment; filename={filename}"}
+        )
+    except Exception as exc:
+        logger.exception(f"Error generating CSV report for meeting '{meeting_id}'")
+        return jsonify({"status": "error", "message": f"CSV report generation failed: {exc}"}), 500
 
 
 # ── Milestone 3 Meeting Knowledge Repository Routes ────────────────────────
@@ -335,7 +653,8 @@ def list_meetings_endpoint():
 def get_all_meetings_knowledge_endpoint():
     """Retrieve full knowledge objects for all historical meetings."""
     try:
-        data = get_all_meetings_knowledge()
+        user_id = getattr(g, "user_id", None)
+        data = get_all_meetings_knowledge(user_id=user_id)
         return jsonify({"status": "ok", "meetings": data}), 200
     except Exception as exc:
         logger.exception("Error listing historical meeting knowledge")
@@ -348,9 +667,13 @@ def get_all_meetings_knowledge_endpoint():
 def get_transcript_endpoint(meeting_id: str):
     """Retrieve transcript for a specific meeting."""
     try:
-        data = get_meeting_transcript(meeting_id)
-        if data is None:
+        user_id = getattr(g, "user_id", None)
+        mtg = get_meeting(meeting_id, user_id=user_id)
+        if not mtg:
+            if get_meeting(meeting_id):
+                return jsonify({"status": "error", "message": f"Access denied. Meeting '{meeting_id}' belongs to another user."}), 403
             return jsonify({"status": "error", "message": f"Meeting '{meeting_id}' not found."}), 404
+        data = get_meeting_transcript(meeting_id)
         data["status"] = "ok"
         return jsonify(data), 200
     except Exception as exc:
@@ -364,9 +687,13 @@ def get_transcript_endpoint(meeting_id: str):
 def get_summary_endpoint(meeting_id: str):
     """Retrieve summary for a specific meeting."""
     try:
-        data = get_meeting_summary(meeting_id)
-        if data is None:
+        user_id = getattr(g, "user_id", None)
+        mtg = get_meeting(meeting_id, user_id=user_id)
+        if not mtg:
+            if get_meeting(meeting_id):
+                return jsonify({"status": "error", "message": f"Access denied. Meeting '{meeting_id}' belongs to another user."}), 403
             return jsonify({"status": "error", "message": f"Meeting '{meeting_id}' not found."}), 404
+        data = get_meeting_summary(meeting_id)
         data["status"] = "ok"
         return jsonify(data), 200
     except Exception as exc:
@@ -380,9 +707,13 @@ def get_summary_endpoint(meeting_id: str):
 def get_decisions_endpoint(meeting_id: str):
     """Retrieve decisions for a specific meeting."""
     try:
-        data = get_meeting_decisions(meeting_id)
-        if data is None:
+        user_id = getattr(g, "user_id", None)
+        mtg = get_meeting(meeting_id, user_id=user_id)
+        if not mtg:
+            if get_meeting(meeting_id):
+                return jsonify({"status": "error", "message": f"Access denied. Meeting '{meeting_id}' belongs to another user."}), 403
             return jsonify({"status": "error", "message": f"Meeting '{meeting_id}' not found."}), 404
+        data = get_meeting_decisions(meeting_id)
         return jsonify({"status": "ok", "meeting_id": meeting_id, "decisions": data}), 200
     except Exception as exc:
         logger.exception(f"Error fetching decisions for meeting '{meeting_id}'")
@@ -395,9 +726,13 @@ def get_decisions_endpoint(meeting_id: str):
 def get_action_items_endpoint(meeting_id: str):
     """Retrieve action items for a specific meeting."""
     try:
-        data = get_meeting_action_items(meeting_id)
-        if data is None:
+        user_id = getattr(g, "user_id", None)
+        mtg = get_meeting(meeting_id, user_id=user_id)
+        if not mtg:
+            if get_meeting(meeting_id):
+                return jsonify({"status": "error", "message": f"Access denied. Meeting '{meeting_id}' belongs to another user."}), 403
             return jsonify({"status": "error", "message": f"Meeting '{meeting_id}' not found."}), 404
+        data = get_meeting_action_items(meeting_id)
         return jsonify({"status": "ok", "meeting_id": meeting_id, "action_items": data}), 200
     except Exception as exc:
         logger.exception(f"Error fetching action items for meeting '{meeting_id}'")
@@ -410,9 +745,13 @@ def get_action_items_endpoint(meeting_id: str):
 def get_participants_endpoint(meeting_id: str):
     """Retrieve participants for a specific meeting."""
     try:
-        data = get_meeting_participants(meeting_id)
-        if data is None:
+        user_id = getattr(g, "user_id", None)
+        mtg = get_meeting(meeting_id, user_id=user_id)
+        if not mtg:
+            if get_meeting(meeting_id):
+                return jsonify({"status": "error", "message": f"Access denied. Meeting '{meeting_id}' belongs to another user."}), 403
             return jsonify({"status": "error", "message": f"Meeting '{meeting_id}' not found."}), 404
+        data = get_meeting_participants(meeting_id)
         return jsonify({"status": "ok", "meeting_id": meeting_id, "participants": data}), 200
     except Exception as exc:
         logger.exception(f"Error fetching participants for meeting '{meeting_id}'")
@@ -425,9 +764,13 @@ def get_participants_endpoint(meeting_id: str):
 def get_deadlines_endpoint(meeting_id: str):
     """Retrieve deadlines for a specific meeting."""
     try:
-        data = get_meeting_deadlines(meeting_id)
-        if data is None:
+        user_id = getattr(g, "user_id", None)
+        mtg = get_meeting(meeting_id, user_id=user_id)
+        if not mtg:
+            if get_meeting(meeting_id):
+                return jsonify({"status": "error", "message": f"Access denied. Meeting '{meeting_id}' belongs to another user."}), 403
             return jsonify({"status": "error", "message": f"Meeting '{meeting_id}' not found."}), 404
+        data = get_meeting_deadlines(meeting_id)
         return jsonify({"status": "ok", "meeting_id": meeting_id, "deadlines": data}), 200
     except Exception as exc:
         logger.exception(f"Error fetching deadlines for meeting '{meeting_id}'")
@@ -456,6 +799,7 @@ def semantic_search_endpoint():
       - deduplicate: bool (default false)
     """
     try:
+        user_id = getattr(g, "user_id", None)
         if request.method == "POST":
             data = request.get_json(silent=True) or request.form.to_dict() or {}
             query = data.get("query") or data.get("q") or ""
@@ -509,7 +853,8 @@ def semantic_search_endpoint():
             end_date=end_date,
             min_score=min_score,
             deduplicate=deduplicate,
-            db_path=os.getenv("DATABASE_PATH")
+            db_path=os.getenv("DATABASE_PATH"),
+            user_id=user_id
         )
 
         # Log Search Completion and Latency
@@ -546,6 +891,7 @@ def rag_qa_endpoint():
       - meeting_id: str (optional)
     """
     try:
+        user_id = getattr(g, "user_id", None)
         if request.method == "POST":
             data = request.get_json(silent=True) or request.form.to_dict() or {}
             question = data.get("question") or data.get("q") or data.get("query") or ""
@@ -594,7 +940,8 @@ def rag_qa_endpoint():
             content_type=content_type,
             start_date=start_date,
             end_date=end_date,
-            db_path=os.getenv("DATABASE_PATH")
+            db_path=os.getenv("DATABASE_PATH"),
+            user_id=user_id
         )
 
         # Log RAG Completion and Latency

@@ -38,7 +38,10 @@ def process_meeting_input(
     raw_transcript_input: Optional[str] = None,
     title: str = "Meeting Recording",
     llm_service: Optional[LLMService] = None,
-    db_path: Optional[str] = None
+    db_path: Optional[str] = None,
+    zoom_meeting_id: Optional[str] = None,
+    google_meeting_id: Optional[str] = None,
+    user_id: Optional[str] = None
 ) -> Dict[str, Any]:
     """
     Execute the complete end-to-end Meeting Intelligence pipeline.
@@ -55,6 +58,12 @@ def process_meeting_input(
         LLM service instance.
     db_path : str, optional
         Database file path.
+    zoom_meeting_id : str, optional
+        Zoom meeting/recording ID to prevent duplicate imports.
+    google_meeting_id : str, optional
+        Google Meet recording/file ID to prevent duplicate imports.
+    user_id : str, optional
+        ID of authenticated user owning this meeting.
 
     Returns
     -------
@@ -96,12 +105,15 @@ def process_meeting_input(
         intelligence=intelligence,
         raw_transcript=transcript,
         title=title,
-        db_path=db_path
+        db_path=db_path,
+        zoom_meeting_id=zoom_meeting_id,
+        google_meeting_id=google_meeting_id,
+        user_id=user_id
     )
 
     # 4. Generate & Store Vector Embeddings for Semantic Search and RAG
     try:
-        generate_meeting_embeddings(meeting_id, db_path=db_path)
+        generate_meeting_embeddings(meeting_id, db_path=db_path, user_id=user_id)
     except Exception as exc:
         logger.warning(f"Could not generate embeddings for meeting '{meeting_id}': {exc}")
 

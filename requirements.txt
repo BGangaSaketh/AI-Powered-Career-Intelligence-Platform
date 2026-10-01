@@ -3,9 +3,14 @@
 # Python Dependencies
 # ============================================================
 
-# Web framework
+# Web framework & UI
 flask>=3.0.0
 flask-cors>=4.0.0
+streamlit>=1.30.0
+requests>=2.31.0
+reportlab>=4.0.0
+
+
 
 # NLP — preprocessing
 nltk>=3.8.1

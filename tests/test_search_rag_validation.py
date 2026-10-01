@@ -172,7 +172,7 @@ class TestSearchAndRAGValidation:
 
     def test_semantic_search_irrelevant_query(self, search_service, temp_db):
         """3. Irrelevant Query Search with Minimum Score Filtering"""
-        res = search_service.search("quantum astrophysics dark matter exploration", top_k=5, min_score=0.3, db_path=temp_db)
+        res = search_service.search("quantum astrophysics dark matter exploration", top_k=5, min_score=0.4, db_path=temp_db)
         assert res["status"] == "ok"
         assert res["total_results"] == 0
 

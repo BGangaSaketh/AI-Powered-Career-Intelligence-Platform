@@ -46,36 +46,12 @@ class SemanticSearchService:
         end_date: Optional[str] = None,
         min_score: Optional[float] = None,
         deduplicate: bool = False,
-        db_path: Optional[str] = None
+        db_path: Optional[str] = None,
+        user_id: Optional[str] = None
     ) -> Dict[str, Any]:
         """
-        Execute semantic search for a natural language query across historical meeting knowledge.
-
-        Parameters
-        ----------
-        query : str
-            Natural language search prompt.
-        top_k : int
-            Maximum number of top results to return.
-        meeting_id : str, optional
-            Filter search space to a specific meeting.
-        content_type : str, optional
-            Filter search space to a specific content type ("summary", "transcript", "decision", "action_item").
-        start_date : str, optional
-            Filter search space to meetings on or after this ISO date string (YYYY-MM-DD).
-        end_date : str, optional
-            Filter search space to meetings on or before this ISO date string (YYYY-MM-DD).
-        min_score : float, optional
-            Minimum relevance similarity score threshold.
-        deduplicate : bool
-            If True, returns only the single highest-scoring snippet per meeting.
-        db_path : str, optional
-            Database path.
-
-        Returns
-        -------
-        Dict[str, Any]
-            Search response payload containing latency_ms and list of enriched meeting results.
+        Execute semantic search for a natural language query across historical meeting knowledge,
+        restricted to the authenticated user_id.
         """
         t_start = time.perf_counter()
 
@@ -102,7 +78,7 @@ class SemanticSearchService:
                 "results": []
             }
 
-        # 2. Perform Vector Similarity Search
+        # 2. Perform Vector Similarity Search with User Isolation
         fetch_limit = top_k * 5 if (deduplicate or start_date or end_date) else top_k
         try:
             raw_hits = self.vector_store.similarity_search(
@@ -110,7 +86,8 @@ class SemanticSearchService:
                 top_k=fetch_limit,
                 meeting_id=meeting_id,
                 content_type=content_type,
-                db_path=db_path
+                db_path=db_path,
+                user_id=user_id
             )
         except Exception as exc:
             logger.error(f"Vector Database Error during search: {exc}")
@@ -136,7 +113,8 @@ class SemanticSearchService:
                     top_k=fetch_limit,
                     meeting_id=meeting_id,
                     content_type=content_type,
-                    db_path=db_path
+                    db_path=db_path,
+                    user_id=user_id
                 )
                 if hash_hits and hash_hits[0].get("score", 0.0) > top_score:
                     raw_hits = hash_hits

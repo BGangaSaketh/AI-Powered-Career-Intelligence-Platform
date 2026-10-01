@@ -1,0 +1,35 @@
+# Git & Version Control
+.git
+.gitignore
+
+# Environment & Credentials
+.env
+*.pem
+*.key
+*.json
+
+# Python Bytecode & Cache
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Local Database & Virtual Environments
+*.db
+*.sqlite
+.venv/
+venv/
+ENV/
+
+# Temporary Uploads & Media Artifacts
+uploads/*
+temp_audio/*
+!uploads/.gitkeep
+!temp_audio/.gitkeep
+
+# IDE Configs
+.idea/
+.vscode/
+*.swp

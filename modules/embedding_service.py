@@ -324,19 +324,22 @@ def generate_meeting_embeddings(
     db_path: Optional[str] = None,
     service: Optional[EmbeddingService] = None,
     max_chunk_words: int = 80,
-    overlap: int = 15
+    overlap: int = 15,
+    user_id: Optional[str] = None
 ) -> List[Dict[str, Any]]:
     """
     End-to-End embedding pipeline for a historical meeting:
     1. Fetch complete meeting knowledge from database.
     2. Extract searchable content items (summary, transcript chunks, decisions, action items).
     3. Generate embedding vectors dynamically.
-    4. Attach metadata (meeting_id, content_type, source_id, chunk_index, text).
-    5. Persist to database linked by meeting_id.
+    4. Attach metadata (meeting_id, content_type, source_id, chunk_index, text, user_id).
+    5. Persist to database linked by meeting_id and user_id.
     """
-    meeting_data = get_complete_meeting(meeting_id, db_path=db_path)
+    meeting_data = get_complete_meeting(meeting_id, db_path=db_path, user_id=user_id)
     if not meeting_data:
         raise ValueError(f"Meeting '{meeting_id}' not found in database.")
+
+    owner_id = user_id or meeting_data.get("user_id") or meeting_data.get("metadata", {}).get("user_id")
 
     svc = service or EmbeddingService()
 
@@ -368,12 +371,13 @@ def generate_meeting_embeddings(
             "chunk_index": item["chunk_index"],
             "text": item["text"],
             "embedding": vec,
-            "dimension": len(vec)
+            "dimension": len(vec),
+            "user_id": owner_id
         })
 
     # Clear old embeddings & persist new embeddings atomically
     delete_meeting_embeddings(meeting_id, db_path=db_path)
-    save_embeddings(meeting_id, processed_items, db_path=db_path)
+    save_embeddings(meeting_id, processed_items, db_path=db_path, user_id=owner_id)
 
     logger.info(f"Generated and saved {len(processed_items)} embeddings for meeting '{meeting_id}'.")
-    return get_meeting_embeddings(meeting_id, db_path=db_path)
+    return get_meeting_embeddings(meeting_id, db_path=db_path, user_id=owner_id)

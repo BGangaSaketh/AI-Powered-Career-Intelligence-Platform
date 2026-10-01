@@ -1,233 +1,301 @@
-# AI-Powered Career Intelligence Platform
+# AI-Powered Meeting Intelligence & Grounded RAG Platform
 
-[![Python](https://img.shields.io/badge/Python-3.9%2B-blue?logo=python)](https://python.org)
-[![Flask](https://img.shields.io/badge/Flask-3.x-black?logo=flask)](https://flask.palletsprojects.com)
-[![Pydantic](https://img.shields.io/badge/Pydantic-v2-red)](https://pydantic.dev)
-[![SQLite](https://img.shields.io/badge/SQLite-Database-blue?logo=sqlite)](https://sqlite.org)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Tests](https://img.shields.io/badge/Tests-186%20passed-brightgreen)](#running-tests)
-
-The **AI-Powered Career Intelligence Platform** is an enterprise-grade AI software application designed to transform career communications, interviews, and meeting recordings into structured, actionable intelligence.
-
-The application combines a modern text NLP processing engine with an advanced **Meeting Intelligence Pipeline**, a **Meeting Knowledge Repository**, **Vector Database & Embedding Engine**, **Natural Language Semantic Search**, and **Grounded RAG (Retrieval-Augmented Generation) Question Answering**.
+An enterprise-grade, privacy-first AI platform for meeting transcription, intelligence extraction (summaries, decisions, action items, participants, deadlines), vector search, grounded Retrieval-Augmented Generation (RAG), and cloud platform integrations (Zoom & Google Meet).
 
 ---
 
-## Table of Contents
+## 1. Project Overview
 
-1. [Project Overview](#project-overview)
-2. [Features](#features)
-3. [Architecture](#architecture)
-4. [Milestone 3 Core Architecture](#milestone-3-core-architecture)
-   - [Meeting Knowledge Repository](#1-meeting-knowledge-repository)
-   - [Embedding Generation Engine](#2-embedding-generation-engine)
-   - [Vector Database Integration](#3-vector-database-integration)
-   - [Natural Language Semantic Search](#4-natural-language-semantic-search)
-   - [Grounded RAG Question Answering](#5-grounded-rag-question-answering)
-5. [Meeting Processing Pipeline](#meeting-processing-pipeline)
-6. [Transcription](#transcription)
-7. [LLM Processing & Prompt Engineering](#llm-processing)
-8. [Database & Vector Store Schema](#database)
-9. [API Reference](#api-reference)
-10. [User Interface](#user-interface)
-11. [Installation & Setup](#installation)
-12. [Environment Variables](#environment-variables)
-13. [Running the Application](#running-the-application)
-14. [Running Tests](#running-tests)
-15. [Performance Benchmarks](#performance-benchmarks)
-16. [License](#license)
+The **AI-Powered Meeting Intelligence & Grounded RAG Platform** processes audio/video meeting recordings, raw transcripts, CSV logs, and cloud recordings into structured intelligence. It indexes meeting knowledge into a high-performance vector store to enable semantic search and context-grounded AI assistant question answering with multi-tenant user access isolation.
 
 ---
 
-## Project Overview
-
-The platform operates across two main operational modes:
-
-1. **Text & Sentiment NLP Engine**: Ingests raw text, `.txt`, `.csv`, or audio/video files to run NLTK tokenization, stop-word filtering, lemmatization, and VADER sentiment analysis.
-2. **Meeting Intelligence & RAG Engine**: Ingests meeting recordings (WAV, MP3, MP4, AVI, MKV, etc.) or transcripts, converts speech via Whisper transcription, processes text through configurable LLMs, validates output schemas, extracts executive summaries, key discussion points, formal decisions, action items, and participant responsibilities, indexes vector embeddings into SQLite, and provides natural-language semantic search and grounded RAG Q&A.
-
----
-
-## Features
-
-- **Multi-Modal Input**: Ingest manual text, `.txt` files, `.csv` spreadsheets, or audio/video recordings.
-- **Speech & Audio Processing**: Automatic audio normalisation (16 kHz mono WAV) and speech transcription.
-- **Configurable LLM Layer**: Pluggable provider support (Mock, OpenAI, Google Gemini, Ollama, Custom REST endpoints).
-- **Anti-Hallucination Prompt Engineering**: Reusable prompt templates enforcing strict JSON output and returning `null`/`[]`/`"Unknown"` when data is missing.
-- **Strict Schema Validation**: Powered by Pydantic v2 with JSON cleanup and error recovery.
-- **Long Transcript Handling**: Sentence-aware sliding-window chunking with token overlap and intermediate result aggregation.
-- **Action Extraction Engine**: Extracts task description, assigned participant, deadline, priority (`High`, `Medium`, `Low`, `Unknown`), and status (`Pending`, `In Progress`, `Completed`).
-- **Conservative Participant Mapping**: Prevents premature merging of distinct names (e.g. preserving "Ravi", "Ravi Kumar", "R. Kumar" as distinct unless explicit context connects them).
-- **SQLite Database Persistence**: Relational storage for meetings, transcripts, action items, key points, decisions, participants, and vector embeddings with foreign key constraints.
-- **Vector Search & Grounded RAG**: Sub-3-second semantic search over historical meetings with grounded answer synthesis and source attribution.
-- **Interactive Dashboard**: Modern glassmorphism UI with real-time pipeline status, priority/status badges, and search/ask modal integration.
-
----
-
-## Architecture
+## 2. Architecture
 
 ```
-Meeting Recording / Audio / Transcript
-                 ↓
-Speech / Whisper Transcription (modules/transcription.py)
-                 ↓
-Input Validation & Token Estimation (modules/long_transcript.py)
-                 ↓
-      [ Single Pass / Chunking ]
-                 ↓
-LLM Service Layer (modules/llm_service.py & modules/prompts.py)
-                 ↓
-Structured Pydantic JSON Validation (modules/schemas.py)
-                 ↓
-Summarization | Action Extraction | Participant Mapping
-                 ↓
-Database Persistence (modules/database.py)
-                 ↓
-Automatic Vector Embedding Generation (modules/meeting_service.py & modules/embedding_service.py)
-                 ↓
-SQLite Vector Indexing (modules/vector_store.py)
-                 ↓
-Natural Language Semantic Search & RAG Q&A (modules/semantic_search.py & modules/rag_service.py)
-                 ↓
-REST Endpoints & Web Dashboard (app.py & static/js/app.js)
+[ Upload / Audio / Zoom / Google Meet ]
+                │
+                ▼
+    [ Transcription Engine ] (Faster-Whisper / SpeechRecognition)
+                │
+                ▼
+     [ Preprocessing & Sentiment ] (NLTK Tokenization + VADER Sentiment)
+                │
+                ▼
+     [ LLM Intelligence Engine ] (DeepSeek / Gemini / OpenAI / Ollama / Mock)
+                │
+                ├────────────► [ SQLite Database ] (Meetings, Users, Action Items, Transcripts)
+                │
+                ▼
+   [ Vector Embedding Engine ] (BGE / Sentence-Transformers / Hash Vectorizer)
+                │
+                ▼
+     [ Vector Store Service ] (Cosine Similarity + SQLite Vector Indexing)
+                │
+                ├────────────► [ Hybrid Semantic Search ] (< 15ms Latency)
+                │
+                ▼
+     [ Grounded RAG QA Engine ] (Grounded Prompting + Fallback Safeguards)
+                │
+                ├────────────► [ FastAPI / Flask REST Server ] (Port 5000)
+                │
+                └────────────► [ Streamlit Dashboard UI ] (Port 8501)
+                │
+                ▼
+   [ Professional PDF & CSV Exports ] (ReportLab + CSV Writer)
 ```
 
 ---
 
-## Milestone 3 Core Architecture
+## 3. Features
 
-### 1. Meeting Knowledge Repository
-- Maintains structured meeting knowledge (`summary`, `key_points`, `decisions`, `action_items`, `participants`, `deadlines`, `raw_transcript`).
-- Provides clean lookup APIs (`get_meeting`, `get_meeting_metadata`, `get_meeting_transcript`, `list_meetings`).
-
-### 2. Embedding Generation Engine
-- Implemented in `modules/embedding_service.py`.
-- Supports pluggable providers: `hash` (feature hashing vectorizer for zero-dependency test execution), `sentence_transformers` (`all-MiniLM-L6-v2`), and `openai` (`text-embedding-3-small`).
-- Normalizes embedding vectors to unit length for accurate cosine similarity calculation.
-
-### 3. Vector Database Integration
-- Implemented in `modules/vector_store.py`.
-- Stores chunked text embeddings in SQLite table `embeddings` (`id`, `meeting_id`, `content_type`, `source_id`, `chunk_index`, `embedding_json`, `text`, `created_at`).
-- Performs fast in-memory cosine similarity matrix math across stored vectors.
-
-### 4. Natural Language Semantic Search
-- Implemented in `modules/semantic_search.py`.
-- Supports parameter filters: `top_k`, `meeting_id`, `content_type`, `start_date`, `end_date`, `min_score`, `deduplicate`.
-- Enriches vector hits with meeting title, summary, created date, and snippet text.
-- Measures and reports execution latency in milliseconds (`latency_ms`).
-
-### 5. Grounded RAG Question Answering
-- Implemented in `modules/rag_service.py`.
-- Enforces strict grounding using retrieved context snippets and prompt instructions.
-- Includes top-score relative cutoff filtering (`top_score * 0.35`) to eliminate context leakage from unrelated historical meetings.
-- Returns clear source attribution array (`meeting_id`, `title`, `date`, `content_type`, `relevant_snippet`, `similarity`).
-- Anti-hallucination guardrail: Returns standard fallback notice (`"I couldn't find enough information..."`) when no relevant context chunks are found.
+- **Multi-Source Ingestion**: Process `.wav`, `.mp3`, `.mp4`, `.m4a`, `.webm`, `.txt`, `.csv`, raw transcripts, and live cloud imports from Zoom & Google Meet.
+- **Automated Intelligence**: Extracts summaries, key points, decisions, action items with assignees/deadlines/priorities, and participant responsibilities.
+- **Sentiment & Sentiment Detail**: Sentence-level sentiment polarity analysis using VADER.
+- **Hybrid Semantic Search**: Sub-15ms vector similarity search with date range and content type filters.
+- **Grounded RAG AI Assistant**: Context-grounded QA with strict hallucination prevention and clear source citations.
+- **Multi-Tenant Security**: Token-based authentication and database-level user isolation across API routes, vector store search, RAG context, and exports.
+- **Executive Exports**: Professional ReportLab PDF generation and structured CSV exports.
+- **Interactive UI**: Rich Streamlit dashboard with KPI metrics, interactive tables, dynamic graphs, and chat assistant.
 
 ---
 
-## API Reference
+## 4. Backend Setup
 
-| Method | Endpoint | Description | Auth Required |
-|--------|----------|-------------|---------------|
-| GET | `/` | Web UI Dashboard | No |
-| POST | `/api/analyze` | Text NLP Preprocessing & Sentiment | No |
-| POST | `/api/transcribe` | Audio/Video Transcription & NLP | No |
-| POST | `/meetings/process` | Full Meeting Intelligence Pipeline | Optional |
-| GET | `/meetings` | List All Processed Historical Meetings | Optional |
-| GET | `/meetings/<id>` | Retrieve Processed Meeting Details | Optional |
-| GET / POST | `/search` | Semantic Search over Meetings (`q`, `top_k`, `start_date`, `end_date`) | Optional |
-| GET / POST | `/ask` | Grounded RAG Question Answering (`q`, `top_k`, `meeting_id`) | Optional |
-
----
-
-## Installation
-
-### Prerequisites
-- Python 3.9+
-- pip
-- ffmpeg (required by pydub for audio formats)
+The backend REST API is built with Flask/FastAPI and runs on Python 3.12+.
 
 ```bash
-git clone https://github.com/gangasaketh/ai-powered-career-intelligence-platform.git
-cd ai-powered-career-intelligence-platform
+# Clone the workspace and navigate to the project directory
+cd "AI-Powered Career Intelligence Platform"
 
-python -m venv venv
-# Activate virtual environment
-# Windows: venv\Scripts\activate
-# Linux/macOS: source venv/bin/activate
+# Create a virtual environment
+python -m venv .venv
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 
-python -m pip install -r requirements.txt
+# Install dependencies
+pip install -r requirements.txt
+
+# Start backend server
+python app.py
 ```
+*API default address*: `http://localhost:5000`
 
 ---
 
-## Environment Variables
+## 5. Streamlit Setup
 
-Copy `.env.example` to `.env`:
+The frontend dashboard provides a web user interface.
 
-```env
+```bash
+# Launch Streamlit Dashboard
+streamlit run streamlit_app.py --server.port=8501
+```
+*Dashboard default address*: `http://localhost:8501`
+
+---
+
+## 6. Database Setup
+
+The platform utilizes SQLite with automatic schema migration and WAL (Write-Ahead Logging) journal mode for multi-threaded safety.
+
+- **Default DB File**: `career_intelligence.db`
+- **Schema**:
+  - `users`: User authentication, email, hashed tokens.
+  - `meetings`: Meeting metadata, title, summary, word count, sentiment, user ID.
+  - `transcripts`: Full meeting transcript texts.
+  - `meeting_embeddings`: Chunked vector embeddings, text snippets, content types (`transcript`, `summary`, `action_items`).
+
+Database tables are initialized automatically on startup via `init_db()`.
+
+---
+
+## 7. Environment Variables
+
+Create a `.env` file based on `.env.example`:
+
+```bash
+# Server & Security
+PORT=5000
+DATABASE_PATH=career_intelligence.db
+REQUIRE_AUTH=true
+API_KEY=your_system_api_key_here
+
+# Dashboard
+API_BASE_URL=http://localhost:5000
+STREAMLIT_PORT=8501
+
+# LLM Provider ("mock", "openai", "gemini", "ollama")
 LLM_PROVIDER=mock
 LLM_MODEL=gpt-4o-mini
 LLM_API_KEY=your_llm_api_key_here
-LLM_API_BASE=https://api.openai.com/v1
-LLM_MAX_TOKENS=2000
-LLM_TEMPERATURE=0.2
-MAX_CHUNK_TOKENS=3000
-CHUNK_OVERLAP_TOKENS=200
-DATABASE_PATH=career_intelligence.db
-REQUIRE_AUTH=false
-API_KEY=your_optional_api_key
+
+# Zoom Integration
+ZOOM_CLIENT_ID=your_zoom_client_id_here
+ZOOM_CLIENT_SECRET=your_zoom_client_secret_here
+ZOOM_ACCOUNT_ID=your_zoom_account_id_here
+
+# Google Meet Integration
+GOOGLE_CLIENT_ID=your_google_client_id_here
+GOOGLE_CLIENT_SECRET=your_google_client_secret_here
+GOOGLE_REFRESH_TOKEN=your_google_refresh_token_here
 ```
 
 ---
 
-## Running the Application
+## 8. LLM Configuration
+
+The `LLMService` in [`modules/llm_service.py`](file:///c:/Users/ganga/OneDrive/Documents/AI-Powered%20Career%20Intelligence%20Platform/modules/llm_service.py) supports pluggable providers configured via `LLM_PROVIDER`:
+
+- `mock`: Instant local mock engine (used for offline development & fast testing).
+- `openai`: OpenAI GPT models (`gpt-4o`, `gpt-4o-mini`).
+- `gemini`: Google Gemini API (`gemini-1.5-flash`, `gemini-1.5-pro`).
+- `ollama`: Self-hosted local LLMs (e.g. `llama3`, `mistral`).
+
+---
+
+## 9. Embedding Configuration
+
+The `EmbeddingService` in [`modules/embedding_service.py`](file:///c:/Users/ganga/OneDrive/Documents/AI-Powered%20Career%20Intelligence%20Platform/modules/embedding_service.py) provides 3 vector generation modes:
+
+1. `bge`: BAAI/bge-small-en-v1.5 dense sentence embeddings.
+2. `tfidf`: Term Frequency-Inverse Document Frequency vectorizer.
+3. `hash`: HashingVectorizer engine for zero-dependency test execution.
+
+---
+
+## 10. Vector Database Configuration
+
+Vector storage is managed by `VectorStoreService` in [`modules/vector_store.py`](file:///c:/Users/ganga/OneDrive/Documents/AI-Powered%20Career%20Intelligence%20Platform/modules/vector_store.py).
+- Vectors are normalized and indexed with cosine similarity scoring.
+- Multi-tenant query filtering enforces `WHERE user_id = ?` at the SQL indexing layer.
+
+---
+
+## 11. Authentication
+
+Authentication is handled via Bearer tokens:
+
+- **Register**: `POST /auth/register` → Returns JWT bearer token & user ID.
+- **Login**: `POST /auth/login` → Validates credentials and returns bearer token.
+- **Current User**: `GET /auth/me` with `Authorization: Bearer <token>`.
+
+---
+
+## 12. Zoom Integration
+
+`ZoomService` in [`modules/zoom_service.py`](file:///c:/Users/ganga/OneDrive/Documents/AI-Powered%20Career%20Intelligence%20Platform/modules/zoom_service.py) integrates Zoom Server-to-Server (S2S) OAuth:
+
+- **List Cloud Recordings**: `GET /zoom/recordings`
+- **Import Recording**: `POST /zoom/import` with `{"recording_id": "..."}`
+- **Webhooks**: `POST /zoom/webhook` with URL verification challenge support.
+
+---
+
+## 13. Google Meet Integration
+
+`GoogleMeetService` in [`modules/google_meet_service.py`](file:///c:/Users/ganga/OneDrive/Documents/AI-Powered%20Career%20Intelligence%20Platform/modules/google_meet_service.py) retrieves recordings from Google Drive:
+
+- **List Meet Recordings**: `GET /google/recordings`
+- **Import Recording**: `POST /google/import` with `{"file_id": "..."}`
+
+---
+
+## 14. Running Locally
+
+To run both backend and Streamlit frontend concurrently:
 
 ```bash
+# Terminal 1 (Backend API)
 python app.py
-```
 
-Access the application in your browser at: `http://localhost:5000`
+# Terminal 2 (Streamlit Dashboard)
+streamlit run streamlit_app.py
+```
 
 ---
 
-## Running Tests
+## 15. Running Tests
 
-Execute the full suite of **186 unit, integration, and E2E regression tests**:
+Execute the complete pytest regression suite (235 tests):
 
 ```bash
+# Run full test suite
 python -m pytest
+
+# Run Milestone 4 E2E Integration Suite
+python -m pytest tests/test_milestone4_e2e.py -v
+
+# Run Performance, Security & Reliability Audit Suite
+python -m pytest tests/test_milestone4_perf_security_reliability.py -v
 ```
 
-Test suite breakdown:
-- `test_e2e_integration.py`: Complete pipeline, RAG prompt validation queries, API endpoints, database integrity.
-- `test_api_integration.py`: REST API routes (`/meetings`, `/meetings/{id}`, `/search`, `/ask`), auth, sanitized error responses.
-- `test_search_rag_validation.py`: Semantic search filters, date ranges, prompt grounding, anti-hallucination guardrails.
-- `test_performance_and_edge_cases.py`: Large transcript chunking, multi-meeting separation, vector DB & LLM degradation handling, latency benchmarking.
-- `test_semantic_search.py`: Vector search accuracy, scoring, deduplication.
-- `test_rag_service.py`: RAG pipeline, context building, source attribution.
-- `test_vector_store.py`: Vector insertion, metadata queries, similarity search.
-- `test_embedding_service.py`: Multi-provider embedding generation & normalization.
-- `test_ingestion.py`, `test_preprocessing.py`, `test_sentiment.py`, `test_pipeline.py`: NLP engine tests.
-- `test_llm_service.py`, `test_prompts.py`, `test_long_transcript.py`, `test_summarization.py`, `test_action_extraction.py`, `test_participants.py`, `test_database.py`, `test_meeting_pipeline.py`: Meeting intelligence pipeline tests.
+---
+
+## 16. Deployment Instructions
+
+### Docker & Docker Compose (Recommended)
+
+```bash
+# Build and run containers in detached mode
+docker-compose up -d --build
+
+# View container logs
+docker-compose logs -f
+
+# Stop containers
+docker-compose down
+```
 
 ---
 
-## Performance Benchmarks
+## 17. API Endpoints
 
-All operations meet or exceed strict sub-3-second latency SLAs:
-
-| Component | Target SLA | Measured Execution Time | Status |
-|-----------|------------|-------------------------|--------|
-| Query Embedding Generation | < 500 ms | **0.15 ms** | PASS |
-| Vector Similarity Search | < 1000 ms | **1.20 ms** | PASS |
-| DB Metadata Retrieval | < 500 ms | **0.80 ms** | PASS |
-| **Total Semantic Search Latency** | **< 3000 ms** | **~2.55 ms** | **PASS** |
-| **Total Grounded RAG Latency** | **< 3000 ms** | **~4.50 ms** | **PASS** |
+| Method | Endpoint | Description | Auth Required |
+| :--- | :--- | :--- | :---: |
+| `GET` | `/` | API Root / Health Status | No |
+| `POST` | `/auth/register` | Register new user account | No |
+| `POST` | `/auth/login` | User login | No |
+| `GET` | `/auth/me` | Fetch user profile | Yes |
+| `GET` | `/meetings` | List authenticated user meetings | Yes |
+| `POST` | `/meetings/process` | Upload audio/video or transcript | Yes |
+| `GET` | `/meetings/<id>` | Fetch meeting details | Yes |
+| `GET` | `/meetings/<id>/export/pdf` | Export PDF report | Yes |
+| `GET` | `/meetings/<id>/export/csv` | Export CSV report | Yes |
+| `POST` | `/search` | Semantic search across meetings | Yes |
+| `POST` | `/ask` | Grounded RAG question answering | Yes |
+| `GET` | `/zoom/recordings` | List available Zoom recordings | Yes |
+| `POST` | `/zoom/import` | Import Zoom cloud recording | Yes |
+| `GET` | `/google/recordings` | List Google Meet recordings | Yes |
+| `POST` | `/google/import` | Import Google Meet recording | Yes |
 
 ---
 
-## License
+## 18. Dashboard Usage
 
-This project is licensed under the **MIT License**.
-Copyright (c) 2026 Ganga Saketh. See [LICENSE](LICENSE) for details.
+1. Open `http://localhost:8501` in your web browser.
+2. Log in using your user credentials or register a new account.
+3. Upload an audio recording or paste raw meeting transcript in **Process Meeting**.
+4. View real-time extracted executive summary, key points, action items, assignees, deadlines, and participants.
+5. Download PDF or CSV meeting reports with one click.
+
+---
+
+## 19. Search / RAG Usage
+
+- **Semantic Search**: Enter natural language queries (e.g., *"API refactoring schedule"*) to retrieve context snippets ranked by cosine similarity.
+- **AI Assistant**: Ask questions (e.g., *"What deadline was set for the database migration?"*). The assistant provides a grounded response citing source meeting titles. Unanswerable questions trigger a safe fallback message.
+
+---
+
+## 20. PDF / CSV Export
+
+- **PDF Export**: Generates a professional multi-page document featuring executive summary, key points, action items table, participant roles, and branding headers.
+- **CSV Export**: Generates a clean tabular CSV report structured into metadata, executive summary, decisions, action items, and participants sections.
+
+---
+
+## 21. Troubleshooting
+
+- **Audio File Processing Failure**: Ensure `ffmpeg` is installed and accessible in your system `PATH`.
+- **Database Lock Error**: The application enables SQLite WAL mode automatically. Ensure write permissions on the `DATABASE_PATH` file directory.
+- **Authentication 401/403 Errors**: Ensure request includes `Authorization: Bearer <token>` header or `REQUIRE_AUTH=false` is set in `.env` for development.
