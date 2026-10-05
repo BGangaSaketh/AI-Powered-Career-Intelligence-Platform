@@ -60,37 +60,40 @@ The **AI-Powered Meeting Intelligence & Grounded RAG Platform** processes audio/
 
 ---
 
-## 4. Backend Setup
+## 4. Platform Quick Start
 
-The backend REST API is built with Flask/FastAPI and runs on Python 3.12+.
+Launch the entire unified AI Career Intelligence Platform with ONE command:
 
 ```bash
-# Clone the workspace and navigate to the project directory
-cd "AI-Powered Career Intelligence Platform"
-
-# Create a virtual environment
-python -m venv .venv
-source .venv/bin/activate  # On Windows: .venv\Scripts\activate
-
 # Install dependencies
 pip install -r requirements.txt
 
-# Start backend server
-python app.py
+# Start Platform Orchestrator (Backend API + Streamlit Dashboard)
+python run.py
 ```
-*API default address*: `http://localhost:5000`
+
+*Main Application Address*: **[http://localhost:8501](http://localhost:8501)**
+
+The orchestrator manages background services, checks health, handles process cleanup, and exposes a single unified dashboard URL.
 
 ---
 
-## 5. Streamlit Setup
+## 5. Platform Navigation Modules
 
-The frontend dashboard provides a web user interface.
+The unified Streamlit application provides 11 navigation modules:
 
-```bash
-# Launch Streamlit Dashboard
-streamlit run streamlit_app.py --server.port=8501
-```
-*Dashboard default address*: `http://localhost:8501`
+1. **📊 Dashboard**: Global KPI metrics, meeting status, and recent activity overview.
+2. **🎙️ Meeting Intelligence**: Audio/video recording & transcript ingestion pipeline.
+3. **📜 Transcript Workspace**: Searchable speech transcripts viewer with keyword highlighting.
+4. **💡 AI Insights**: Global action items priority matrix, decisions log, and participant responsibilities.
+5. **🔍 Semantic Search**: Sub-15ms vector similarity search with metadata & date filters.
+6. **📚 Knowledge Repository**: Vector knowledge chunks browser and SQLite index stats.
+7. **🤖 AI Assistant (RAG)**: Grounded QA assistant with source citations & hallucination safeguards.
+8. **🧠 Text & Sentiment NLP**: Direct text analysis with VADER compound scores & sentence breakdowns.
+9. **📄 Reports & Export**: Professional PDF executive report download & CSV dataset export.
+10. **🔌 Cloud Integrations**: Zoom (Server-to-Server OAuth) and Google Meet (Google Drive OAuth).
+11. **⚙️ Settings & System Status**: Live architecture monitor for API health, database, vector store, and LLM engine.
+
 
 ---
 

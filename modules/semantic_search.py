@@ -155,6 +155,7 @@ class SemanticSearchService:
             item = {
                 "meeting_id": m_id,
                 "title": title,
+                "meeting_title": title,
                 "date": created_at,
                 "created_at": created_at,
                 "summary": summary,
@@ -165,6 +166,7 @@ class SemanticSearchService:
                 "chunk_index": hit.get("chunk_index", 0),
                 "similarity": score_val,
                 "score": score_val,
+                "similarity_score": score_val,
                 "vector_id": hit.get("id")
             }
 

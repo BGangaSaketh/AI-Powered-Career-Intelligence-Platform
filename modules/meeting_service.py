@@ -118,6 +118,14 @@ def process_meeting_input(
         logger.warning(f"Could not generate embeddings for meeting '{meeting_id}': {exc}")
 
     # 5. Construct Final Response Payload
+    intelligence_dict = {
+        "summary": intelligence.summary,
+        "key_points": intelligence.key_points,
+        "decisions": intelligence.decisions,
+        "action_items": [item.model_dump() for item in intelligence.action_items],
+        "participants": [p.model_dump() for p in intelligence.participants]
+    }
+
     return {
         "status": "ok",
         "meeting_id": meeting_id,
@@ -127,6 +135,8 @@ def process_meeting_input(
         "decisions": intelligence.decisions,
         "action_items": [item.model_dump() for item in intelligence.action_items],
         "participants": [p.model_dump() for p in intelligence.participants],
+        "intelligence": intelligence_dict,
         "raw_transcript": transcript,
         "file_type": file_type
     }
+

@@ -64,6 +64,17 @@ class MeetingApiClient:
         self.api_key = None
         return True
 
+    def health_check(self) -> Tuple[bool, str]:
+        """Check if backend API health endpoint responds with 200 OK."""
+        url = f"{self.base_url}/health"
+        try:
+            resp = requests.get(url, timeout=3)
+            if resp.status_code == 200:
+                return True, "Backend API operational"
+            return False, f"Backend returned HTTP {resp.status_code}"
+        except Exception as exc:
+            return False, f"Backend health check failed: {exc}"
+
     def verify_connection(self) -> Tuple[bool, str]:
         """
         Verify API server reachability and authentication token.
@@ -101,7 +112,10 @@ class MeetingApiClient:
         url = f"{self.base_url}/meetings/{meeting_id}"
         headers = self._get_headers()
         resp = requests.get(url, headers=headers, timeout=10)
-        resp.raise_for_status()
+        if resp.status_code != 200:
+            err_data = resp.json() if "application/json" in resp.headers.get("content-type", "") else {}
+            err_msg = err_data.get("message", f"Meeting '{meeting_id}' not found.")
+            raise RuntimeError(err_msg)
         data = resp.json()
         if data.get("status") == "ok":
             return data
@@ -308,6 +322,16 @@ class MeetingApiClient:
         if resp.status_code != 200:
             raise RuntimeError(f"CSV export failed ({resp.status_code}): {resp.text}")
         return resp.text
+
+    def analyze_text(self, text: str) -> Dict[str, Any]:
+        """Analyze raw text using backend sentiment and NLP pipeline (/api/analyze)."""
+        url = f"{self.base_url}/api/analyze"
+        headers = self._get_headers()
+        resp = requests.post(url, headers=headers, json={"text": text}, timeout=30)
+        if resp.status_code != 200:
+            raise RuntimeError(f"Text analysis failed ({resp.status_code}): {resp.text}")
+        return resp.json()
+
 
 
 

@@ -407,7 +407,7 @@ def get_meeting(meeting_id: str, db_path: Optional[str] = None, user_id: Optiona
 
         # Ownership enforcement if user_id is passed and not admin/system
         m_user_id = meeting_row["user_id"] if "user_id" in meeting_row.keys() else None
-        if user_id and user_id != "system" and m_user_id and m_user_id != user_id:
+        if user_id and user_id != "system" and m_user_id and m_user_id != user_id and m_user_id != "system":
             logger.warning(f"User '{user_id}' attempted to access meeting '{meeting_id}' belonging to '{m_user_id}'")
             return None
 
@@ -479,6 +479,7 @@ def get_meeting(meeting_id: str, db_path: Optional[str] = None, user_id: Optiona
         }
 
         return {
+            "id": meeting_row["id"],
             "meeting_id": meeting_row["id"],
             "user_id": m_user_id,
             "title": meeting_row["title"],
@@ -713,7 +714,7 @@ def list_meetings(db_path: Optional[str] = None, user_id: Optional[str] = None) 
     try:
         if user_id and user_id != "system":
             cur = conn.execute(
-                "SELECT id, title, summary, created_at, status, user_id FROM meetings WHERE user_id = ? ORDER BY created_at DESC",
+                "SELECT id, title, summary, created_at, status, user_id FROM meetings WHERE user_id = ? OR user_id = 'system' OR user_id IS NULL ORDER BY created_at DESC",
                 (user_id,)
             )
         else:

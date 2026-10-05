@@ -173,6 +173,19 @@ def _run_pipeline(raw_text: str, ingestion_result: dict) -> dict:
     }
 
 
+# ── System Health Routes ───────────────────────────────────────────────────
+
+@app.route("/health", methods=["GET"])
+@app.route("/api/health", methods=["GET"])
+def health_check():
+    """System health check endpoint for orchestrator/launchers."""
+    return jsonify({
+        "status": "ok",
+        "service": "AI-Powered Career Intelligence Platform API",
+        "message": "Backend API operational"
+    }), 200
+
+
 # ── User Authentication Routes ──────────────────────────────────────────────
 
 @app.route("/auth/register", methods=["POST"])
@@ -304,8 +317,10 @@ def analyze():
         ingestion_result = ingest_txt_file(f)
 
     else:
-        raw_text = request.form.get("text", "").strip()
+        json_data = request.get_json(silent=True) or {}
+        raw_text = (json_data.get("text") or request.form.get("text") or "").strip()
         ingestion_result = ingest_text(raw_text)
+
 
     if ingestion_result["status"] == "error":
         return jsonify({
@@ -959,9 +974,10 @@ def rag_qa_endpoint():
 # ── Run ────────────────────────────────────────────────────────────────────
 
 if __name__ == "__main__":
+    port = int(os.getenv("PORT", os.getenv("BACKEND_PORT", 5000)))
     print("\n" + "="*60)
-    print("  AI-Powered Career Intelligence Platform")
-    print("  Milestone 1 & Milestone 2 — Meeting Intelligence System")
-    print("  Server running at http://localhost:5000")
+    print("  AI-Powered Career Intelligence Platform Backend API")
+    print(f"  Internal API Server running on port {port}")
     print("="*60 + "\n")
-    app.run(debug=True, host="0.0.0.0", port=5000)
+    app.run(debug=False, host="0.0.0.0", port=port, use_reloader=False)
+
