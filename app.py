@@ -194,9 +194,9 @@ def register_endpoint():
     """Register a new user account."""
     try:
         data = request.get_json(silent=True) or request.form.to_dict() or {}
-        username = data.get("username") or ""
-        email = data.get("email") or ""
-        password = data.get("password") or ""
+        username = str(data.get("username") or "").strip()
+        email = str(data.get("email") or "").strip()
+        password = str(data.get("password") or "")
 
         if not username or not email or not password:
             return jsonify({"status": "error", "message": "Username, email, and password parameters are required."}), 400
@@ -227,8 +227,8 @@ def login_endpoint():
     """Authenticate user credentials and return access token."""
     try:
         data = request.get_json(silent=True) or request.form.to_dict() or {}
-        username_or_email = data.get("username") or data.get("email") or data.get("username_or_email") or ""
-        password = data.get("password") or ""
+        username_or_email = str(data.get("username") or data.get("email") or data.get("username_or_email") or "").strip()
+        password = str(data.get("password") or "")
 
         if not username_or_email or not password:
             return jsonify({"status": "error", "message": "Username/email and password parameters are required."}), 400

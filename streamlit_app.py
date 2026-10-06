@@ -38,131 +38,215 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# ── Global Custom Design System (CSS) ───────────────────────────────────────
+# ── Global Custom Design System (CSS) — Obsidian Intelligence ──────────────
 st.markdown("""
 <style>
-    /* Global Typography & Background */
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
     
     html, body, [class*="css"] {
-        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+        background-color: #0B0D10 !important;
+        color: #F1F3F5 !important;
     }
 
-    /* Main Header Gradient Title */
-    .gradient-header {
-        font-size: 2.2rem;
-        font-weight: 800;
-        background: linear-gradient(90deg, #38bdf8 0%, #818cf8 50%, #c084fc 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        margin-bottom: 0.2rem;
-    }
-    
-    .sub-caption {
-        color: #94a3b8;
-        font-size: 0.95rem;
-        margin-bottom: 1.5rem;
+    .stApp {
+        background-color: #0B0D10 !important;
+        color: #F1F3F5 !important;
     }
 
-    /* Metric Cards */
+    .block-container {
+        padding-top: 1.8rem !important;
+        padding-bottom: 2rem !important;
+        max-width: 1200px !important;
+    }
+
+    /* Page Header Hierarchy */
+    .obsidian-title {
+        font-size: 1.75rem !important;
+        font-weight: 600 !important;
+        color: #F1F3F5 !important;
+        letter-spacing: -0.01em !important;
+        margin-bottom: 0.2rem !important;
+    }
+
+    .obsidian-sub-caption {
+        color: #9AA3AD !important;
+        font-size: 0.875rem !important;
+        font-weight: 400 !important;
+        margin-bottom: 1.5rem !important;
+    }
+
+    .obsidian-section-title {
+        font-size: 1.15rem !important;
+        font-weight: 600 !important;
+        color: #F1F3F5 !important;
+        margin-top: 1.2rem !important;
+        margin-bottom: 0.6rem !important;
+    }
+
+    /* KPI / Metric Cards */
     .metric-card {
-        background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
-        border: 1px solid #334155;
-        border-radius: 12px;
-        padding: 20px;
-        color: #f8fafc;
-        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-        transition: transform 0.2s ease, border-color 0.2s ease;
+        background-color: #12161B !important;
+        border: 1px solid #272D35 !important;
+        border-top: 2px solid #8B7CF6 !important;
+        border-radius: 8px !important;
+        padding: 16px 18px !important;
+        color: #F1F3F5 !important;
+        box-shadow: none !important;
+        transition: border-color 0.15s ease !important;
     }
     .metric-card:hover {
-        border-color: #38bdf8;
-        transform: translateY(-2px);
+        border-color: #363E48 !important;
+        border-top-color: #8B7CF6 !important;
     }
     .metric-value {
-        font-size: 2.2rem;
-        font-weight: 700;
-        color: #38bdf8;
-        line-height: 1.2;
+        font-size: 1.75rem !important;
+        font-weight: 600 !important;
+        color: #F1F3F5 !important;
+        line-height: 1.25 !important;
+        margin-top: 4px !important;
     }
     .metric-label {
-        font-size: 0.85rem;
-        text-transform: uppercase;
-        letter-spacing: 0.08em;
-        color: #94a3b8;
-        font-weight: 600;
-        margin-bottom: 4px;
+        font-size: 0.75rem !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.06em !important;
+        color: #9AA3AD !important;
+        font-weight: 600 !important;
     }
 
-    /* Status Badges */
+    /* Status Indicators */
     .badge-status-online {
-        background-color: rgba(16, 185, 129, 0.15);
-        color: #34d399;
-        border: 1px solid rgba(52, 211, 153, 0.3);
-        padding: 4px 12px;
-        border-radius: 20px;
-        font-size: 0.85rem;
-        font-weight: 600;
-        display: inline-block;
+        background-color: rgba(69, 185, 124, 0.12) !important;
+        color: #45B97C !important;
+        border: 1px solid rgba(69, 185, 124, 0.3) !important;
+        padding: 3px 10px !important;
+        border-radius: 6px !important;
+        font-size: 0.75rem !important;
+        font-weight: 600 !important;
+        display: inline-block !important;
     }
     .badge-status-offline {
-        background-color: rgba(239, 68, 68, 0.15);
-        color: #f87171;
-        border: 1px solid rgba(248, 113, 113, 0.3);
-        padding: 4px 12px;
-        border-radius: 20px;
-        font-size: 0.85rem;
-        font-weight: 600;
-        display: inline-block;
-    }
-    
-    /* Content Containers */
-    .content-box {
-        background: #0f172a;
-        border: 1px solid #1e293b;
-        border-radius: 10px;
-        padding: 18px;
-        margin-bottom: 15px;
+        background-color: rgba(217, 107, 107, 0.12) !important;
+        color: #D96B6B !important;
+        border: 1px solid rgba(217, 107, 107, 0.3) !important;
+        padding: 3px 10px !important;
+        border-radius: 6px !important;
+        font-size: 0.75rem !important;
+        font-weight: 600 !important;
+        display: inline-block !important;
     }
 
-    /* Sidebar Navigation Enhancement */
-    [data-testid="stSidebar"] {
-        background-color: #0b1120;
-        border-right: 1px solid #1e293b;
+    /* Primary & Secondary Buttons */
+    div.stButton > button, div.stDownloadButton > button {
+        background-color: #8B7CF6 !important;
+        color: #FFFFFF !important;
+        border: 1px solid #7C3AED !important;
+        border-radius: 6px !important;
+        font-weight: 500 !important;
+        font-size: 0.875rem !important;
+        padding: 0.45rem 1rem !important;
+        transition: background-color 0.15s ease, border-color 0.15s ease !important;
+        box-shadow: none !important;
     }
-    
+    div.stButton > button:hover, div.stDownloadButton > button:hover {
+        background-color: #7C3AED !important;
+        border-color: #6D28D9 !important;
+        box-shadow: none !important;
+    }
+
+    /* Navigation Tabs */
+    div[data-baseweb="tab-list"] {
+        background-color: #12161B !important;
+        border-radius: 8px !important;
+        padding: 4px !important;
+        gap: 4px !important;
+        border: 1px solid #272D35 !important;
+    }
+    div[data-baseweb="tab"] {
+        border-radius: 6px !important;
+        color: #9AA3AD !important;
+        font-size: 0.85rem !important;
+        font-weight: 500 !important;
+        padding: 6px 14px !important;
+        transition: all 0.15s ease !important;
+    }
+    div[data-baseweb="tab"][aria-selected="true"] {
+        background-color: #171C22 !important;
+        color: #F1F3F5 !important;
+        border: 1px solid #272D35 !important;
+        box-shadow: none !important;
+    }
+
+    /* Content Boxes */
+    .content-box {
+        background-color: #12161B !important;
+        border: 1px solid #272D35 !important;
+        border-radius: 8px !important;
+        padding: 20px !important;
+        margin-bottom: 16px !important;
+    }
+
+    /* Sidebar Shell */
+    [data-testid="stSidebar"] {
+        background-color: #0B0D10 !important;
+        border-right: 1px solid #272D35 !important;
+    }
+
+    .sidebar-user-card {
+        background-color: #12161B !important;
+        border: 1px solid #272D35 !important;
+        border-radius: 6px !important;
+        padding: 10px 12px !important;
+        margin-bottom: 16px !important;
+    }
+
     /* Custom Scrollbars */
     ::-webkit-scrollbar {
-        width: 8px;
-        height: 8px;
+        width: 6px;
+        height: 6px;
     }
     ::-webkit-scrollbar-track {
-        background: #0f172a;
+        background: #0B0D10;
     }
     ::-webkit-scrollbar-thumb {
-        background: #334155;
-        border-radius: 4px;
+        background: #272D35;
+        border-radius: 3px;
     }
     ::-webkit-scrollbar-thumb:hover {
-        background: #475569;
+        background: #363E48;
     }
 </style>
 """, unsafe_allow_html=True)
 
 
-# ── Navigation Items Registry ──────────────────────────────────────────────
+# ── Navigation Registry & Clean Mapping ───────────────────────────────────
 NAV_PAGES = [
-    "📊 Dashboard",
-    "🎙️ Meeting Intelligence",
-    "📜 Transcript Workspace",
-    "💡 AI Insights",
-    "🔍 Semantic Search",
-    "📚 Knowledge Repository",
-    "🤖 AI Assistant / RAG",
-    "🧠 Text & Sentiment NLP",
-    "📄 Reports & Export",
-    "🔌 Cloud Integrations",
-    "⚙️ Settings & System Status"
+    "Dashboard",
+    "Meeting Intelligence",
+    "Transcript Workspace",
+    "AI Insights",
+    "Semantic Search",
+    "Knowledge Repository",
+    "AI Assistant / RAG",
+    "Text & Sentiment NLP",
+    "Reports & Export",
+    "Cloud Integrations",
+    "Settings & System Status"
 ]
+
+PAGE_LABEL_MAP = {
+    "📊 Dashboard": "Dashboard",
+    "🎙️ Meeting Intelligence": "Meeting Intelligence",
+    "📜 Transcript Workspace": "Transcript Workspace",
+    "💡 AI Insights": "AI Insights",
+    "🔍 Semantic Search": "Semantic Search",
+    "📚 Knowledge Repository": "Knowledge Repository",
+    "🤖 AI Assistant / RAG": "AI Assistant / RAG",
+    "🧠 Text & Sentiment NLP": "Text & Sentiment NLP",
+    "📄 Reports & Export": "Reports & Export",
+    "🔌 Cloud Integrations": "Cloud Integrations",
+    "⚙️ Settings & System Status": "Settings & System Status"
+}
 
 
 # ── Session State & Query Parameter Syncing ────────────────────────────────
@@ -177,9 +261,10 @@ if "user_info" not in st.session_state:
 
 # Restore state from URL query parameters if present (for refresh survival)
 url_params = st.query_params
-initial_page = url_params.get("page", "📊 Dashboard")
+param_page = url_params.get("page", "Dashboard")
+initial_page = PAGE_LABEL_MAP.get(param_page, param_page)
 if initial_page not in NAV_PAGES:
-    initial_page = "📊 Dashboard"
+    initial_page = "Dashboard"
 
 if "current_page" not in st.session_state:
     st.session_state.current_page = initial_page
@@ -189,8 +274,9 @@ if "selected_meeting_id" not in st.session_state:
 
 def navigate_to(page_name: str, meeting_id: Optional[str] = None):
     """Navigate to a page while updating session state and URL query parameters."""
-    st.session_state.current_page = page_name
-    st.query_params["page"] = page_name
+    clean_page = PAGE_LABEL_MAP.get(page_name, page_name)
+    st.session_state.current_page = clean_page
+    st.query_params["page"] = clean_page
     if meeting_id:
         st.session_state.selected_meeting_id = meeting_id
         st.query_params["meeting_id"] = meeting_id
@@ -207,29 +293,29 @@ def get_api_client() -> MeetingApiClient:
 
 # ── Authentication View ────────────────────────────────────────────────────
 def render_login_view():
-    st.markdown('<div class="gradient-header">💼 AI Career Intelligence Platform</div>', unsafe_allow_html=True)
-    st.markdown('<div class="sub-caption">Enterprise Privacy-First Meeting Intelligence & Grounded RAG Platform</div>', unsafe_allow_html=True)
+    col_l, col_center, col_r = st.columns([1, 2, 1])
 
-    col1, col2 = st.columns([2, 1])
+    with col_center:
+        st.markdown('<div class="obsidian-title" style="text-align: center;">AI Career Intelligence Platform</div>', unsafe_allow_html=True)
+        st.markdown('<div class="obsidian-sub-caption" style="text-align: center;">Meeting Intelligence & Grounded RAG Platform</div>', unsafe_allow_html=True)
 
-    with col1:
-        st.info("Authenticate to access your private meeting intelligence, transcriptions, semantic search, and AI assistant.")
-
-        auth_tab1, auth_tab2, auth_tab3 = st.tabs(["🔑 User Login", "📝 Register Account", "🔗 API Key Token Connection"])
+        auth_tab1, auth_tab2, auth_tab3 = st.tabs(["User Login", "Register Account", "Token Connection"])
 
         with auth_tab1:
             with st.form("user_login_form"):
                 username_input = st.text_input("Username or Email", help="Your account username or email address")
                 password_input = st.text_input("Password", type="password")
-                login_btn = st.form_submit_button("🔑 Login", use_container_width=True)
+                login_btn = st.form_submit_button("Login", use_container_width=True)
 
                 if login_btn:
-                    if not username_input or not password_input:
+                    u_clean = username_input.strip()
+                    p_clean = password_input.strip()
+                    if not u_clean or not p_clean:
                         st.error("Please enter both username/email and password.")
                     else:
                         client = get_api_client()
                         try:
-                            res = client.login(username_or_email=username_input, password=password_input)
+                            res = client.login(username_or_email=u_clean, password=p_clean)
                             st.session_state.api_key = res.get("token", "")
                             st.session_state.user_info = res.get("user")
                             st.session_state.authenticated = True
@@ -243,19 +329,22 @@ def render_login_view():
                 reg_username = st.text_input("Desired Username")
                 reg_email = st.text_input("Email Address")
                 reg_password = st.text_input("Password", type="password")
-                register_btn = st.form_submit_button("📝 Register Account", use_container_width=True)
+                register_btn = st.form_submit_button("Register Account", use_container_width=True)
 
                 if register_btn:
-                    if not reg_username or not reg_email or not reg_password:
+                    ru_clean = reg_username.strip()
+                    re_clean = reg_email.strip()
+                    rp_clean = reg_password.strip()
+                    if not ru_clean or not re_clean or not rp_clean:
                         st.error("Please complete all registration fields.")
                     else:
                         client = get_api_client()
                         try:
-                            res = client.register(username=reg_username, email=reg_email, password=reg_password)
+                            res = client.register(username=ru_clean, email=re_clean, password=rp_clean)
                             st.session_state.api_key = res.get("token", "")
                             st.session_state.user_info = res.get("user")
                             st.session_state.authenticated = True
-                            st.success(f"Registration successful! Logged in as {reg_username}.")
+                            st.success(f"Registration successful! Logged in as {ru_clean}.")
                             st.rerun()
                         except Exception as exc:
                             st.error(f"Registration failed: {exc}")
@@ -269,7 +358,7 @@ def render_login_view():
                     help="System token or admin bearer key"
                 )
 
-                connect_btn = st.form_submit_button("🔗 Connect via Token", use_container_width=True)
+                connect_btn = st.form_submit_button("Connect via Token", use_container_width=True)
 
                 if connect_btn:
                     st.session_state.api_key = api_key_input.strip()
@@ -285,23 +374,24 @@ def render_login_view():
                     else:
                         st.error(f"Connection Failed: {message}")
 
-    with col2:
-        st.markdown("### Security & Features")
-        st.markdown("- **Multi-Tenant Security**: Token-based data isolation")
-        st.markdown("- **Grounded RAG AI**: Hallucination-free assistant with citations")
-        st.markdown("- **Vector Intelligence**: SQLite vector store with Cosine similarity")
-        st.markdown("- **Executive Reports**: Automated PDF & CSV exports")
-
 
 # ── Render Header & Sidebar ────────────────────────────────────────────────
 def render_sidebar():
-    st.sidebar.markdown("### 💼 Career Intelligence")
+    st.sidebar.markdown("""
+        <div class="sidebar-brand">AI Career Intelligence</div>
+        <div class="sidebar-sub">Meeting Intelligence & Grounded RAG</div>
+    """, unsafe_allow_html=True)
+
     user_name = st.session_state.user_info.get("username", "User") if st.session_state.user_info else "Authenticated User"
-    st.sidebar.caption(f"👤 **User**: `{user_name}`")
-    st.sidebar.markdown("---")
+    st.sidebar.markdown(f"""
+        <div class="sidebar-user-card">
+            <div style="font-size: 0.72rem; text-transform: uppercase; color: #9AA3AD; font-weight: 600;">Active Account</div>
+            <div style="font-size: 0.95rem; font-weight: 600; color: #F1F3F5; margin-top: 2px;">{user_name}</div>
+        </div>
+    """, unsafe_allow_html=True)
 
     current_idx = NAV_PAGES.index(st.session_state.current_page) if st.session_state.current_page in NAV_PAGES else 0
-    selected = st.sidebar.radio("Platform Menu", NAV_PAGES, index=current_idx)
+    selected = st.sidebar.radio("Navigation", NAV_PAGES, index=current_idx)
 
     if selected != st.session_state.current_page:
         st.session_state.current_page = selected
@@ -309,7 +399,7 @@ def render_sidebar():
         st.rerun()
 
     st.sidebar.markdown("---")
-    if st.sidebar.button("🚪 Logout", use_container_width=True):
+    if st.sidebar.button("Logout", use_container_width=True):
         client = get_api_client()
         client.logout()
         st.session_state.authenticated = False
@@ -320,10 +410,12 @@ def render_sidebar():
         st.rerun()
 
 
+
+
 # ── 1. Dashboard ───────────────────────────────────────────────────────────
 def render_dashboard_page():
-    st.markdown('<div class="gradient-header">📊 Main Dashboard</div>', unsafe_allow_html=True)
-    st.markdown('<div class="sub-caption">Platform KPI metrics, recent meeting intelligence overview, and quick actions.</div>', unsafe_allow_html=True)
+    st.markdown('<div class="obsidian-title">Career Intelligence</div>', unsafe_allow_html=True)
+    st.markdown('<div class="obsidian-sub-caption">Meeting Intelligence & Grounded RAG Platform Overview</div>', unsafe_allow_html=True)
 
     client = get_api_client()
 
@@ -349,7 +441,7 @@ def render_dashboard_page():
 
     c1, c2, c3, c4, c5 = st.columns(5)
     with c1:
-        st.markdown(f'<div class="metric-card"><div class="metric-label">Total Meetings</div><div class="metric-value">{total_meetings}</div></div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="metric-card"><div class="metric-label">Meetings</div><div class="metric-value">{total_meetings}</div></div>', unsafe_allow_html=True)
     with c2:
         st.markdown(f'<div class="metric-card"><div class="metric-label">Action Items</div><div class="metric-value">{total_action_items}</div></div>', unsafe_allow_html=True)
     with c3:
@@ -357,12 +449,12 @@ def render_dashboard_page():
     with c4:
         st.markdown(f'<div class="metric-card"><div class="metric-label">Decisions</div><div class="metric-value">{total_decisions}</div></div>', unsafe_allow_html=True)
     with c5:
-        status_html = '<span class="badge-status-online">🟢 Active</span>' if health_ok else '<span class="badge-status-offline">🔴 Offline</span>'
-        st.markdown(f'<div class="metric-card"><div class="metric-label">Backend Status</div><div style="margin-top: 10px;">{status_html}</div></div>', unsafe_allow_html=True)
+        status_html = '<span class="badge-status-online">Active</span>' if health_ok else '<span class="badge-status-offline">Offline</span>'
+        st.markdown(f'<div class="metric-card"><div class="metric-label">Backend API</div><div style="margin-top: 10px;">{status_html}</div></div>', unsafe_allow_html=True)
 
     st.markdown("<br>", unsafe_allow_html=True)
 
-    tab_overview, tab_quick_actions = st.tabs(["📅 Stored Meetings Overview", "⚡ Quick Platform Actions"])
+    tab_overview, tab_quick_actions = st.tabs(["Stored Meetings", "Quick Actions"])
 
     with tab_overview:
         if not meetings_data:
@@ -383,51 +475,51 @@ def render_dashboard_page():
             df = pd.DataFrame(table_rows)
             st.dataframe(df, use_container_width=True, hide_index=True)
 
-            st.markdown("#### Inspect Specific Meeting")
+            st.markdown('<div class="obsidian-section-title">Inspect Specific Meeting</div>', unsafe_allow_html=True)
             m_options = {m["id"]: f"{m.get('title')} ({str(m.get('created_at', ''))[:10]})" for m in meetings_data}
             selected_m = st.selectbox("Select Meeting to Open:", list(m_options.keys()), format_func=lambda x: m_options[x], key="dash_m_select")
-            if st.button("🎙️ Open Meeting Intelligence"):
-                navigate_to("🎙️ Meeting Intelligence", selected_m)
+            if st.button("Open Meeting Intelligence"):
+                navigate_to("Meeting Intelligence", selected_m)
 
     with tab_quick_actions:
         qa_col1, qa_col2, qa_col3, qa_col4 = st.columns(4)
         with qa_col1:
-            st.markdown("#### 🎙️ New Meeting")
+            st.markdown('<div class="obsidian-section-title">Meeting Intelligence</div>', unsafe_allow_html=True)
             st.write("Upload audio/video recordings or text transcripts for processing.")
             if st.button("Go to Meeting Intelligence", key="qa_btn1"):
-                navigate_to("🎙️ Meeting Intelligence")
+                navigate_to("Meeting Intelligence")
         with qa_col2:
-            st.markdown("#### 🔍 Semantic Search")
+            st.markdown('<div class="obsidian-section-title">Semantic Search</div>', unsafe_allow_html=True)
             st.write("Perform similarity vector search across all meeting content.")
             if st.button("Go to Semantic Search", key="qa_btn2"):
-                navigate_to("🔍 Semantic Search")
+                navigate_to("Semantic Search")
         with qa_col3:
-            st.markdown("#### 🤖 Grounded RAG AI")
+            st.markdown('<div class="obsidian-section-title">Grounded RAG AI</div>', unsafe_allow_html=True)
             st.write("Ask natural-language questions with source citations.")
             if st.button("Go to AI Assistant", key="qa_btn3"):
-                navigate_to("🤖 AI Assistant / RAG")
+                navigate_to("AI Assistant / RAG")
         with qa_col4:
-            st.markdown("#### 📄 Executive Reports")
+            st.markdown('<div class="obsidian-section-title">Executive Reports</div>', unsafe_allow_html=True)
             st.write("Generate professional PDF reports and CSV datasets.")
             if st.button("Go to Reports & Export", key="qa_btn4"):
-                navigate_to("📄 Reports & Export")
+                navigate_to("Reports & Export")
 
 
 # ── 2. Meeting Intelligence ────────────────────────────────────────────────
 def render_meeting_intelligence_page():
-    st.markdown('<div class="gradient-header">🎙️ Meeting Intelligence</div>', unsafe_allow_html=True)
-    st.markdown('<div class="sub-caption">Process audio/video recordings or raw transcripts and inspect complete structured meeting intelligence.</div>', unsafe_allow_html=True)
+    st.markdown('<div class="obsidian-title">Meeting Intelligence</div>', unsafe_allow_html=True)
+    st.markdown('<div class="obsidian-sub-caption">Ingest, transcribe audio/video recordings, and inspect structured meeting intelligence.</div>', unsafe_allow_html=True)
 
     client = get_api_client()
 
-    mi_tab1, mi_tab2 = st.tabs(["📤 Upload & Process Meeting", "📁 Inspect Processed Meetings"])
+    mi_tab1, mi_tab2 = st.tabs(["Upload & Process", "Processed Meetings"])
 
     with mi_tab1:
-        upload_type = st.radio("Select Input Source:", ["🎙️ Audio / Video Recording File", "📝 Raw Transcript Text"], horizontal=True)
+        upload_type = st.radio("Select Input Source:", ["Audio / Video Recording File", "Raw Transcript Text"], horizontal=True)
 
         title_input = st.text_input("Meeting Title (Optional)", placeholder="e.g. Q4 Architecture & Product Strategy Review")
 
-        if upload_type == "🎙️ Audio / Video Recording File":
+        if upload_type == "Audio / Video Recording File":
             uploaded_file = st.file_uploader(
                 "Choose recording file:",
                 type=["wav", "mp3", "flac", "ogg", "m4a", "mp4", "avi", "mov", "mkv", "webm"],
@@ -435,9 +527,9 @@ def render_meeting_intelligence_page():
             )
 
             if uploaded_file is not None:
-                st.write(f"📁 **File**: `{uploaded_file.name}` ({uploaded_file.size / (1024*1024):.2f} MB)")
+                st.write(f"File: `{uploaded_file.name}` ({uploaded_file.size / (1024*1024):.2f} MB)")
 
-                if st.button("🚀 Process Recording Pipeline", type="primary", key="btn_proc_rec"):
+                if st.button("Process Recording", type="primary", key="btn_proc_rec"):
                     with st.spinner("Transcribing speech with Whisper & extracting meeting intelligence..."):
                         try:
                             file_bytes = uploaded_file.read()
@@ -447,11 +539,11 @@ def render_meeting_intelligence_page():
                                 title=title_input.strip() if title_input else uploaded_file.name
                             )
 
-                            st.success(f"✅ Meeting processed successfully! ID: `{res.get('meeting_id')}`")
+                            st.success(f"Meeting processed successfully. ID: `{res.get('meeting_id')}`")
                             st.session_state.selected_meeting_id = res.get("meeting_id")
 
                             intelligence = res.get("intelligence", {})
-                            st.markdown("### Executive Summary")
+                            st.markdown('<div class="obsidian-section-title">Executive Summary</div>', unsafe_allow_html=True)
                             st.info(intelligence.get("summary", "No summary generated."))
 
                         except Exception as exc:
@@ -460,7 +552,7 @@ def render_meeting_intelligence_page():
         else:
             transcript_text = st.text_area("Paste Raw Meeting Transcript Text:", height=220, placeholder="Speaker A: Welcome everyone to the quarterly review...\nSpeaker B: I will update on backend API performance...")
 
-            if st.button("🚀 Process Transcript Text", type="primary", key="btn_proc_text"):
+            if st.button("Process Transcript Text", type="primary", key="btn_proc_text"):
                 if not transcript_text.strip():
                     st.warning("Please enter transcript text before processing.")
                 else:
@@ -470,11 +562,11 @@ def render_meeting_intelligence_page():
                                 transcript_text=transcript_text.strip(),
                                 title=title_input.strip() if title_input else "Meeting Transcript"
                             )
-                            st.success(f"✅ Meeting transcript processed! ID: `{res.get('meeting_id')}`")
+                            st.success(f"Meeting transcript processed. ID: `{res.get('meeting_id')}`")
                             st.session_state.selected_meeting_id = res.get("meeting_id")
 
                             intelligence = res.get("intelligence", {})
-                            st.markdown("### Executive Summary")
+                            st.markdown('<div class="obsidian-section-title">Executive Summary</div>', unsafe_allow_html=True)
                             st.info(intelligence.get("summary", "No summary generated."))
 
                         except Exception as exc:
@@ -575,8 +667,8 @@ def render_meeting_intelligence_page():
 
 # ── 3. Transcript Workspace ────────────────────────────────────────────────
 def render_transcript_workspace_page():
-    st.markdown('<div class="gradient-header">📜 Transcript Workspace</div>', unsafe_allow_html=True)
-    st.markdown('<div class="sub-caption">Search, filter, and inspect full speech transcripts from historical meeting recordings.</div>', unsafe_allow_html=True)
+    st.markdown('<div class="obsidian-title">Transcript Workspace</div>', unsafe_allow_html=True)
+    st.markdown('<div class="obsidian-sub-caption">Search, filter, and inspect full speech transcripts from historical meeting recordings.</div>', unsafe_allow_html=True)
 
     client = get_api_client()
 
@@ -601,16 +693,16 @@ def render_transcript_workspace_page():
             col_search, col_stats = st.columns([3, 1])
 
             with col_stats:
-                st.markdown("#### Transcript Stats")
+                st.markdown('<div class="obsidian-section-title">Transcript Stats</div>', unsafe_allow_html=True)
                 word_count = len(transcript_text.split())
                 char_count = len(transcript_text)
                 st.write(f"**Words**: `{word_count:,}`")
                 st.write(f"**Characters**: `{char_count:,}`")
-                st.download_button("📥 Download Transcript Text", transcript_text, file_name=f"transcript_{selected_id}.txt", mime="text/plain", use_container_width=True)
+                st.download_button("Download Transcript Text", transcript_text, file_name=f"transcript_{selected_id}.txt", mime="text/plain", use_container_width=True)
 
             with col_search:
-                filter_kw = st.text_input("🔍 Search Keyword inside transcript:", placeholder="Type to filter transcript lines...")
-                st.markdown("#### Speech Transcript Content")
+                filter_kw = st.text_input("Search Keyword inside transcript:", placeholder="Type to filter transcript lines...")
+                st.markdown('<div class="obsidian-section-title">Speech Transcript Content</div>', unsafe_allow_html=True)
 
                 if filter_kw.strip():
                     matching_lines = [line for line in transcript_text.splitlines() if filter_kw.lower() in line.lower()]
@@ -625,8 +717,8 @@ def render_transcript_workspace_page():
 
 # ── 4. AI Insights ──────────────────────────────────────────────────────────
 def render_ai_insights_page():
-    st.markdown('<div class="gradient-header">💡 AI Insights & Analytics</div>', unsafe_allow_html=True)
-    st.markdown('<div class="sub-caption">Cross-meeting intelligence, global action item priority matrix, and participant responsibility mapping.</div>', unsafe_allow_html=True)
+    st.markdown('<div class="obsidian-title">AI Insights & Analytics</div>', unsafe_allow_html=True)
+    st.markdown('<div class="obsidian-sub-caption">Cross-meeting intelligence, global action item priority matrix, and participant responsibility mapping.</div>', unsafe_allow_html=True)
 
     client = get_api_client()
 
@@ -640,10 +732,10 @@ def render_ai_insights_page():
         st.info("No meeting data available for analysis.")
         return
 
-    insights_tab1, insights_tab2, insights_tab3 = st.tabs(["🎯 Action Items Matrix", "💡 Decisions Timeline", "👤 Participant Responsibilities"])
+    insights_tab1, insights_tab2, insights_tab3 = st.tabs(["Action Items Matrix", "Decisions Log", "Participant Mapping"])
 
     with insights_tab1:
-        st.markdown("### 🎯 Global Action Items Matrix")
+        st.markdown('<div class="obsidian-section-title">Action Items Matrix</div>', unsafe_allow_html=True)
         all_actions = []
         for m in meetings_knowledge:
             m_title = m.get("title", "Untitled")
@@ -679,23 +771,23 @@ def render_ai_insights_page():
             st.dataframe(filtered_df, use_container_width=True, hide_index=True)
 
     with insights_tab2:
-        st.markdown("### 💡 Key Decisions Log")
+        st.markdown('<div class="obsidian-section-title">Key Decisions Log</div>', unsafe_allow_html=True)
         decision_count = 0
         for m in meetings_knowledge:
             m_title = m.get("title", "Untitled")
             m_date = str(m.get("created_at", "N/A"))[:10]
             decs = m.get("decisions", [])
             if decs:
-                st.markdown(f"#### 📅 {m_title} (`{m_date}`)")
+                st.markdown(f"**{m_title}** (`{m_date}`)")
                 for d in decs:
-                    st.markdown(f"  - 💡 {d}")
+                    st.markdown(f"  - {d}")
                     decision_count += 1
                 st.markdown("---")
         if decision_count == 0:
             st.info("No key decisions recorded.")
 
     with insights_tab3:
-        st.markdown("### 👤 Participant Responsibility Matrix")
+        st.markdown('<div class="obsidian-section-title">Participant Responsibility Matrix</div>', unsafe_allow_html=True)
         p_data = []
         for m in meetings_knowledge:
             m_title = m.get("title", "Untitled")
@@ -720,22 +812,22 @@ def render_ai_insights_page():
 
 # ── 5. Semantic Search ──────────────────────────────────────────────────────
 def render_semantic_search_page():
-    st.markdown('<div class="gradient-header">🔍 Natural Language Semantic Search</div>', unsafe_allow_html=True)
-    st.markdown('<div class="sub-caption">Sub-15ms vector similarity search across indexed meeting transcripts, summaries, decisions, and action items.</div>', unsafe_allow_html=True)
+    st.markdown('<div class="obsidian-title">Semantic Vector Search</div>', unsafe_allow_html=True)
+    st.markdown('<div class="obsidian-sub-caption">Cosine similarity vector search across indexed meeting transcripts, summaries, decisions, and action items.</div>', unsafe_allow_html=True)
 
     client = get_api_client()
 
     col_q, col_k = st.columns([3, 1])
     with col_q:
         query_input = st.text_input(
-            "Enter Natural Language Search Query:",
+            "Search Query:",
             placeholder="e.g. Which meeting discussed vector database setup and API latency?",
             key="semantic_search_query_input"
         )
     with col_k:
         top_k = st.slider("Top Matches (K)", min_value=1, max_value=20, value=5, key="search_top_k")
 
-    with st.expander("⚙️ Search Filters & Metadata Controls", expanded=True):
+    with st.expander("Search Filters & Controls", expanded=True):
         col_f1, col_f2, col_f3 = st.columns(3)
         with col_f1:
             content_type = st.selectbox("Content Type", ["All Types", "summary", "transcript", "decision", "action_item", "key_point"], key="search_c_type")
@@ -753,7 +845,7 @@ def render_semantic_search_page():
         with col_f3:
             min_score = st.slider("Min Similarity Score", min_value=0.0, max_value=1.0, value=0.0, step=0.05, key="search_min_score")
 
-    if st.button("🔎 Execute Vector Search", type="primary", use_container_width=True):
+    if st.button("Execute Search", type="primary", use_container_width=True):
         if not query_input.strip():
             st.warning("Please enter a search query.")
         else:
@@ -768,7 +860,7 @@ def render_semantic_search_page():
                     )
 
                     results = res.get("results", [])
-                    st.markdown(f"### 🎯 Search Results ({len(results)} matches found in `{res.get('latency_ms', 0):.1f}ms`)")
+                    st.markdown(f'<div class="obsidian-section-title">Search Results ({len(results)} matches found in {res.get("latency_ms", 0):.1f}ms)</div>', unsafe_allow_html=True)
 
                     if not results:
                         st.info("No matching meeting content found for your query with selected filters.")
@@ -780,7 +872,7 @@ def render_semantic_search_page():
                             snippet = item.get("text") or item.get("relevant_snippet") or ""
 
                             with st.container():
-                                st.markdown(f"#### #{idx} | 📌 **{title}** (Score: `{score:.4f}` | Tag: `{tag.upper()}`)")
+                                st.markdown(f"**#{idx} | {title}** (Score: `{score:.4f}` | Tag: `{tag.upper()}`)")
                                 st.info(snippet)
                                 st.markdown("---")
 
@@ -790,8 +882,8 @@ def render_semantic_search_page():
 
 # ── 6. Knowledge Repository ────────────────────────────────────────────────
 def render_knowledge_repository_page():
-    st.markdown('<div class="gradient-header">📚 Knowledge Repository</div>', unsafe_allow_html=True)
-    st.markdown('<div class="sub-caption">Browse historical meeting knowledge chunks, SQLite database entries, and vector index metadata.</div>', unsafe_allow_html=True)
+    st.markdown('<div class="obsidian-title">Knowledge Repository</div>', unsafe_allow_html=True)
+    st.markdown('<div class="obsidian-sub-caption">Historical meeting knowledge chunks, SQLite database entries, and vector index metadata.</div>', unsafe_allow_html=True)
 
     client = get_api_client()
 
@@ -810,8 +902,8 @@ def render_knowledge_repository_page():
     with col_k3:
         st.metric("Vector Index Metric", "Cosine Similarity")
 
-    st.markdown("### Stored Knowledge Entries")
-    search_k = st.text_input("🔍 Filter knowledge records:", placeholder="Type to search knowledge base...")
+    st.markdown('<div class="obsidian-section-title">Stored Knowledge Entries</div>', unsafe_allow_html=True)
+    search_k = st.text_input("Filter knowledge records:", placeholder="Type to search knowledge base...")
 
     rows = []
     for m in meetings_data:
@@ -836,8 +928,8 @@ def render_knowledge_repository_page():
 
 # ── 7. AI Assistant / RAG ──────────────────────────────────────────────────
 def render_ai_assistant_page():
-    st.markdown('<div class="gradient-header">🤖 AI Grounded Assistant (RAG)</div>', unsafe_allow_html=True)
-    st.markdown('<div class="sub-caption">Ask natural language questions. Answers are strictly grounded in retrieved meeting records with source citations.</div>', unsafe_allow_html=True)
+    st.markdown('<div class="obsidian-title">AI Assistant (Grounded RAG)</div>', unsafe_allow_html=True)
+    st.markdown('<div class="obsidian-sub-caption">Ask natural language questions grounded in meeting records with direct source citations.</div>', unsafe_allow_html=True)
 
     client = get_api_client()
 
@@ -851,7 +943,7 @@ def render_ai_assistant_page():
     with col_k:
         top_k = st.slider("Context Chunks (K)", min_value=1, max_value=10, value=5, key="rag_top_k")
 
-    with st.expander("⚙️ Retrieval Options", expanded=False):
+    with st.expander("Retrieval Options", expanded=False):
         try:
             meetings = client.list_meetings()
             m_options = {"All Meetings": None}
@@ -862,7 +954,7 @@ def render_ai_assistant_page():
         except Exception:
             m_id_val = None
 
-    if st.button("💬 Ask Grounded AI Assistant", type="primary", use_container_width=True):
+    if st.button("Ask Assistant", type="primary", use_container_width=True):
         if not question_input.strip():
             st.warning("Please enter a question.")
         else:
@@ -877,21 +969,21 @@ def render_ai_assistant_page():
                     answer_text = res.get("answer") or "No grounded answer available."
                     sources = res.get("sources") or []
 
-                    st.markdown("### 🤖 Answer")
+                    st.markdown('<div class="obsidian-section-title">Grounded Answer</div>', unsafe_allow_html=True)
                     if "couldn't find enough information" in answer_text.lower() or not sources:
-                        st.warning(f"⚠️ **Grounded Response**: {answer_text}")
+                        st.warning(f"{answer_text}")
                     else:
-                        st.success(f"**Grounded Answer:**\n\n{answer_text}")
+                        st.success(f"{answer_text}")
 
                     st.markdown("---")
-                    st.markdown(f"### 📚 Retrieved Sources ({len(sources)} context chunks in `{res.get('latency_ms', 0):.1f}ms`)")
+                    st.markdown(f'<div class="obsidian-section-title">Retrieved Sources ({len(sources)} context chunks in {res.get("latency_ms", 0):.1f}ms)</div>', unsafe_allow_html=True)
 
                     for idx, src in enumerate(sources, 1):
                         title = src.get("meeting_title") or src.get("title") or "Meeting"
                         score = src.get("similarity_score") or src.get("score") or 0.0
                         snippet = src.get("text") or src.get("relevant_snippet") or ""
 
-                        with st.expander(f"Source #{idx} | 📌 {title} | Score: {score:.4f}", expanded=(idx == 1)):
+                        with st.expander(f"Source #{idx} | {title} | Score: {score:.4f}", expanded=(idx == 1)):
                             st.markdown(f"> {snippet}")
 
                 except Exception as exc:
@@ -900,23 +992,23 @@ def render_ai_assistant_page():
 
 # ── 8. Text & Sentiment NLP ────────────────────────────────────────────────
 def render_text_sentiment_page():
-    st.markdown('<div class="gradient-header">🧠 Text & Sentiment NLP Analysis</div>', unsafe_allow_html=True)
-    st.markdown('<div class="sub-caption">Direct text analysis workspace powered by VADER sentiment analysis and NLTK preprocessing.</div>', unsafe_allow_html=True)
+    st.markdown('<div class="obsidian-title">Text & Sentiment NLP</div>', unsafe_allow_html=True)
+    st.markdown('<div class="obsidian-sub-caption">Direct text analysis workspace powered by VADER sentiment analysis and NLTK preprocessing.</div>', unsafe_allow_html=True)
 
     client = get_api_client()
 
-    input_method = st.radio("Select Text Source:", ["✍️ Raw Text Input", "📁 Text / CSV File Upload"], horizontal=True)
+    input_method = st.radio("Select Text Source:", ["Raw Text Input", "Text / CSV File Upload"], horizontal=True)
 
     text_to_analyze = ""
-    if input_method == "✍️ Raw Text Input":
+    if input_method == "Raw Text Input":
         text_to_analyze = st.text_area("Enter Text for Sentiment Analysis:", height=200, placeholder="Our team made fantastic progress on the milestone ahead of schedule. However, server latency issues need urgent attention.")
     else:
         uploaded_txt = st.file_uploader("Upload `.txt` or `.csv` file:", type=["txt", "csv"])
         if uploaded_txt is not None:
             text_to_analyze = uploaded_txt.read().decode("utf-8", errors="ignore")
-            st.write(f"📁 Loaded `{uploaded_txt.name}` ({len(text_to_analyze)} chars)")
+            st.write(f"Loaded `{uploaded_txt.name}` ({len(text_to_analyze)} chars)")
 
-    if st.button("⚡ Run Sentiment & NLP Analysis", type="primary"):
+    if st.button("Run Sentiment & NLP Analysis", type="primary"):
         if not text_to_analyze.strip():
             st.warning("Please provide text to analyze.")
         else:
@@ -931,7 +1023,7 @@ def render_text_sentiment_page():
                     neu = sentiment.get("neu", 0.0)
                     neg = sentiment.get("neg", 0.0)
 
-                    st.markdown("### 📊 Sentiment Overview")
+                    st.markdown('<div class="obsidian-section-title">Sentiment Overview</div>', unsafe_allow_html=True)
                     c1, c2, c3, c4 = st.columns(4)
                     with c1:
                         st.metric("Overall Label", label)
@@ -942,14 +1034,14 @@ def render_text_sentiment_page():
                     with c4:
                         st.metric("Negative Polarity", f"{neg*100:.1f}%")
 
-                    st.markdown("### 📝 Per-Sentence Sentiment Breakdown")
+                    st.markdown('<div class="obsidian-section-title">Per-Sentence Sentiment Breakdown</div>', unsafe_allow_html=True)
                     per_sentence = sentiment.get("per_sentence", [])
                     if per_sentence:
                         st.dataframe(pd.DataFrame(per_sentence), use_container_width=True, hide_index=True)
                     else:
                         st.info("No sentence breakdown generated.")
 
-                    st.markdown("### 📄 Generated Summary")
+                    st.markdown('<div class="obsidian-section-title">Generated Summary</div>', unsafe_allow_html=True)
                     st.info(res.get("summary", "No summary generated."))
 
                 except Exception as exc:
@@ -958,8 +1050,8 @@ def render_text_sentiment_page():
 
 # ── 9. Reports & Export ────────────────────────────────────────────────────
 def render_reports_export_page():
-    st.markdown('<div class="gradient-header">📄 Reports & Executive Export</div>', unsafe_allow_html=True)
-    st.markdown('<div class="sub-caption">Generate and download executive PDF reports and structured CSV datasets for meeting intelligence.</div>', unsafe_allow_html=True)
+    st.markdown('<div class="obsidian-title">Executive Reports & Export</div>', unsafe_allow_html=True)
+    st.markdown('<div class="obsidian-sub-caption">Generate executive PDF summary reports and structured CSV datasets for meeting intelligence.</div>', unsafe_allow_html=True)
 
     client = get_api_client()
 
@@ -980,19 +1072,19 @@ def render_reports_export_page():
         try:
             m_details = client.get_meeting_details(selected_id)
             meta = m_details.get("metadata", {})
-            st.markdown(f"### Selected Meeting: `{meta.get('title', 'Untitled')}`")
+            st.markdown(f"Selected Meeting: `{meta.get('title', 'Untitled')}`")
 
             col_pdf, col_csv = st.columns(2)
 
             with col_pdf:
-                st.markdown("#### 📕 Executive PDF Report")
+                st.markdown('<div class="obsidian-section-title">Executive PDF Report</div>', unsafe_allow_html=True)
                 st.write("Generates a publication-grade PDF report with executive summary, decisions, action items, and participants.")
-                if st.button("⚡ Generate PDF Report", key="btn_gen_pdf"):
+                if st.button("Generate PDF Report", key="btn_gen_pdf"):
                     with st.spinner("Building PDF report with ReportLab..."):
                         try:
                             pdf_bytes = client.export_meeting_pdf(selected_id)
                             st.download_button(
-                                label="📥 Download Executive PDF",
+                                label="Download Executive PDF",
                                 data=pdf_bytes,
                                 file_name=f"Meeting_Report_{selected_id}.pdf",
                                 mime="application/pdf",
@@ -1002,14 +1094,14 @@ def render_reports_export_page():
                             st.error(f"PDF generation failed: {exc}")
 
             with col_csv:
-                st.markdown("#### 📊 Structured CSV Dataset")
+                st.markdown('<div class="obsidian-section-title">Structured CSV Dataset</div>', unsafe_allow_html=True)
                 st.write("Generates a clean CSV file containing structured meeting metadata, summary, decisions, and action items.")
-                if st.button("⚡ Generate CSV Dataset", key="btn_gen_csv"):
+                if st.button("Generate CSV Dataset", key="btn_gen_csv"):
                     with st.spinner("Building CSV dataset..."):
                         try:
                             csv_text = client.export_meeting_csv(selected_id)
                             st.download_button(
-                                label="📥 Download Structured CSV",
+                                label="Download Structured CSV",
                                 data=csv_text,
                                 file_name=f"Meeting_Dataset_{selected_id}.csv",
                                 mime="text/csv",
@@ -1024,15 +1116,15 @@ def render_reports_export_page():
 
 # ── 10. Cloud Integrations ─────────────────────────────────────────────────
 def render_cloud_integrations_page():
-    st.markdown('<div class="gradient-header">🔌 Cloud Integrations</div>', unsafe_allow_html=True)
-    st.markdown('<div class="sub-caption">Import meeting recordings from Zoom & Google Meet cloud integrations.</div>', unsafe_allow_html=True)
+    st.markdown('<div class="obsidian-title">Cloud Integrations</div>', unsafe_allow_html=True)
+    st.markdown('<div class="obsidian-sub-caption">Import meeting recordings from Zoom & Google Meet cloud integrations.</div>', unsafe_allow_html=True)
 
     client = get_api_client()
 
-    tab_zoom, tab_gmeet = st.tabs(["📹 Zoom Integration", "🎥 Google Meet Integration"])
+    tab_zoom, tab_gmeet = st.tabs(["Zoom Integration", "Google Meet Integration"])
 
     with tab_zoom:
-        st.markdown("### 📹 Zoom Cloud Recording Import")
+        st.markdown('<div class="obsidian-section-title">Zoom Cloud Recording Import</div>', unsafe_allow_html=True)
         st.info("Uses Server-to-Server OAuth to fetch and import cloud meeting recordings.")
 
         col_z1, col_z2 = st.columns([2, 1])
@@ -1040,7 +1132,7 @@ def render_cloud_integrations_page():
             zoom_id = st.text_input("Zoom Meeting / Recording ID", placeholder="e.g. 84920481920", key="zoom_id_input")
         with col_z2:
             st.markdown("<br>", unsafe_allow_html=True)
-            fetch_z_btn = st.button("🔄 List Zoom Cloud Recordings", use_container_width=True)
+            fetch_z_btn = st.button("List Zoom Cloud Recordings", use_container_width=True)
 
         if fetch_z_btn:
             with st.spinner("Listing Zoom recordings..."):
@@ -1054,7 +1146,7 @@ def render_cloud_integrations_page():
                 except Exception as exc:
                     st.error(f"Zoom API Error: {exc}")
 
-        if st.button("🚀 Import & Process Zoom Recording", type="primary", key="btn_imp_zoom"):
+        if st.button("Import & Process Zoom Recording", type="primary", key="btn_imp_zoom"):
             if not zoom_id.strip():
                 st.warning("Please enter a Zoom Recording ID.")
             else:
@@ -1066,7 +1158,7 @@ def render_cloud_integrations_page():
                         st.error(f"Zoom import failed: {exc}")
 
     with tab_gmeet:
-        st.markdown("### 🎥 Google Meet / Drive Integration")
+        st.markdown('<div class="obsidian-section-title">Google Meet / Drive Integration</div>', unsafe_allow_html=True)
         st.info("Uses Google OAuth / Service Account credentials to import meeting recordings from Google Drive.")
 
         col_g1, col_g2 = st.columns([2, 1])
@@ -1074,7 +1166,7 @@ def render_cloud_integrations_page():
             g_id = st.text_input("Google Drive File ID", placeholder="e.g. 1a2b3c4d5e6f7g8h9i0", key="g_id_input")
         with col_g2:
             st.markdown("<br>", unsafe_allow_html=True)
-            fetch_g_btn = st.button("🔄 List Google Drive Recordings", use_container_width=True)
+            fetch_g_btn = st.button("List Google Drive Recordings", use_container_width=True)
 
         if fetch_g_btn:
             with st.spinner("Listing Google Drive recordings..."):
@@ -1088,7 +1180,7 @@ def render_cloud_integrations_page():
                 except Exception as exc:
                     st.error(f"Google Drive API Error: {exc}")
 
-        if st.button("🚀 Import & Process Google Meet Recording", type="primary", key="btn_imp_gmeet"):
+        if st.button("Import & Process Google Meet Recording", type="primary", key="btn_imp_gmeet"):
             if not g_id.strip():
                 st.warning("Please enter a Google Drive File ID.")
             else:
@@ -1102,20 +1194,20 @@ def render_cloud_integrations_page():
 
 # ── 11. Settings & System Status ───────────────────────────────────────────
 def render_settings_status_page():
-    st.markdown('<div class="gradient-header">⚙️ Settings & System Status</div>', unsafe_allow_html=True)
-    st.markdown('<div class="sub-caption">Monitor platform health, database state, vector store, and AI engine status.</div>', unsafe_allow_html=True)
+    st.markdown('<div class="obsidian-title">Settings & System Status</div>', unsafe_allow_html=True)
+    st.markdown('<div class="obsidian-sub-caption">Monitor platform health, database state, vector store, and AI engine status.</div>', unsafe_allow_html=True)
 
     client = get_api_client()
 
     health_ok, health_msg = client.health_check()
 
-    st.markdown("### 🟢 Backend API Status")
+    st.markdown('<div class="obsidian-section-title">Backend API Status</div>', unsafe_allow_html=True)
     c1, c2 = st.columns(2)
     with c1:
-        st.write(f"**Health Status**: {'🟢 Operational' if health_ok else '🔴 Unreachable'}")
+        st.write(f"**Health Status**: {'Operational' if health_ok else 'Unreachable'}")
         st.write(f"**Health Message**: `{health_msg}`")
     with c2:
-        if st.button("🔄 Re-verify Connection"):
+        if st.button("Re-verify Connection"):
             with st.spinner("Ping backend..."):
                 ok, msg = client.verify_connection()
                 if ok:
@@ -1124,7 +1216,7 @@ def render_settings_status_page():
                     st.error(msg)
 
     st.markdown("---")
-    st.markdown("### 🗄️ Architecture Status")
+    st.markdown('<div class="obsidian-section-title">Architecture Status</div>', unsafe_allow_html=True)
 
     arch_rows = [
         {"Component": "SQLite Database", "Status": "Active", "Details": "career_intelligence.db (WAL Mode enabled)"},
@@ -1144,29 +1236,36 @@ def main():
     else:
         render_sidebar()
 
-        page = st.session_state.current_page
-        if page == "📊 Dashboard":
+        raw_page = st.session_state.current_page
+        page = PAGE_LABEL_MAP.get(raw_page, raw_page)
+        if page == "Dashboard":
             render_dashboard_page()
-        elif page == "🎙️ Meeting Intelligence":
+        elif page == "Meeting Intelligence":
             render_meeting_intelligence_page()
-        elif page == "📜 Transcript Workspace":
+        elif page == "Transcript Workspace":
             render_transcript_workspace_page()
-        elif page == "💡 AI Insights":
+        elif page == "AI Insights":
             render_ai_insights_page()
-        elif page == "🔍 Semantic Search":
+        elif page == "Semantic Search":
             render_semantic_search_page()
-        elif page == "📚 Knowledge Repository":
+        elif page == "Knowledge Repository":
             render_knowledge_repository_page()
-        elif page == "🤖 AI Assistant / RAG":
+        elif page == "AI Assistant / RAG":
             render_ai_assistant_page()
-        elif page == "🧠 Text & Sentiment NLP":
+        elif page == "Text & Sentiment NLP":
             render_text_sentiment_page()
-        elif page == "📄 Reports & Export":
+        elif page == "Reports & Export":
             render_reports_export_page()
-        elif page == "🔌 Cloud Integrations":
+        elif page == "Cloud Integrations":
             render_cloud_integrations_page()
-        elif page == "⚙️ Settings & System Status":
+        elif page == "Settings & System Status":
             render_settings_status_page()
+
+
+# ── Function Aliases for Test Compatibility ─────────────────────────────────
+render_meetings_explorer_page = render_meeting_intelligence_page
+render_upload_page = render_meeting_intelligence_page
+render_search_page = render_semantic_search_page
 
 
 if __name__ == "__main__":

@@ -27,12 +27,13 @@ from modules.schemas import MeetingIntelligence
 load_dotenv()
 logger = logging.getLogger(__name__)
 
-DEFAULT_DB_PATH = os.getenv("DATABASE_PATH", "career_intelligence.db")
+DEFAULT_DB_PATH = os.path.abspath(os.getenv("DATABASE_PATH") or "career_intelligence.db")
 
 
 def get_db_connection(db_path: Optional[str] = None) -> sqlite3.Connection:
     """Create and return a SQLite database connection with row factory."""
     path = db_path or os.getenv("DATABASE_PATH") or DEFAULT_DB_PATH
+    path = os.path.abspath(path)
     conn = sqlite3.connect(path)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA foreign_keys = ON;")
@@ -204,14 +205,16 @@ def authenticate_user(
     Authenticate a user by username/email and password.
     Returns user dict with active token if valid, else None.
     """
+    if not username_or_email or not password:
+        return None
     init_db(db_path)
     conn = get_db_connection(db_path)
-    ident = username_or_email.strip().lower()
+    ident = username_or_email.strip()
     pwd_hash = hash_password(password)
 
     try:
         cur = conn.execute(
-            "SELECT * FROM users WHERE (LOWER(username) = ? OR LOWER(email) = ?) AND password_hash = ?",
+            "SELECT * FROM users WHERE (username = ? COLLATE NOCASE OR email = ? COLLATE NOCASE) AND password_hash = ?",
             (ident, ident, pwd_hash)
         )
         row = cur.fetchone()
