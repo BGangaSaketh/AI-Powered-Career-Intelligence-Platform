@@ -170,6 +170,7 @@ class MeetingApiClient:
         meeting_id: Optional[str] = None,
         start_date: Optional[str] = None,
         end_date: Optional[str] = None,
+        participant: Optional[str] = None,
         min_score: Optional[float] = None,
         deduplicate: bool = False
     ) -> Dict[str, Any]:
@@ -189,6 +190,8 @@ class MeetingApiClient:
             payload["start_date"] = start_date
         if end_date:
             payload["end_date"] = end_date
+        if participant:
+            payload["participant"] = participant
         if min_score is not None:
             payload["min_score"] = min_score
 
@@ -203,7 +206,8 @@ class MeetingApiClient:
         content_type: Optional[str] = None,
         meeting_id: Optional[str] = None,
         start_date: Optional[str] = None,
-        end_date: Optional[str] = None
+        end_date: Optional[str] = None,
+        participant: Optional[str] = None
     ) -> Dict[str, Any]:
         """Execute RAG question answering via backend API."""
         url = f"{self.base_url}/ask"
@@ -220,6 +224,8 @@ class MeetingApiClient:
             payload["start_date"] = start_date
         if end_date:
             payload["end_date"] = end_date
+        if participant:
+            payload["participant"] = participant
 
         resp = requests.post(url, headers=headers, json=payload, timeout=30)
         resp.raise_for_status()

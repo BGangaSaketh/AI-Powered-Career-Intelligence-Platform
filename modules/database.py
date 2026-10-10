@@ -332,7 +332,7 @@ def save_meeting(
         with conn:
             # 1. Insert Meeting
             conn.execute(
-                "INSERT INTO meetings (id, title, summary, status, created_at, zoom_meeting_id, google_meeting_id, user_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                "INSERT OR REPLACE INTO meetings (id, title, summary, status, created_at, zoom_meeting_id, google_meeting_id, user_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
                 (meeting_id, title, intelligence.summary, "completed", now_iso, zoom_meeting_id, google_meeting_id, user_id)
             )
 

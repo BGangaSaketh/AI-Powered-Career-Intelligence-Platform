@@ -826,6 +826,7 @@ def semantic_search_endpoint():
             meeting_id = data.get("meeting_id")
             start_date = data.get("start_date") or data.get("from_date")
             end_date = data.get("end_date") or data.get("to_date")
+            participant = data.get("participant")
             min_score = float(data["min_score"]) if data.get("min_score") is not None else None
             deduplicate = str(data.get("deduplicate", "false")).lower() in ("true", "1")
         else:
@@ -838,6 +839,7 @@ def semantic_search_endpoint():
             meeting_id = request.args.get("meeting_id")
             start_date = request.args.get("start_date") or request.args.get("from_date")
             end_date = request.args.get("end_date") or request.args.get("to_date")
+            participant = request.args.get("participant")
             min_score = float(request.args["min_score"]) if request.args.get("min_score") is not None else None
             deduplicate = request.args.get("deduplicate", "false").lower() in ("true", "1")
 
@@ -866,6 +868,7 @@ def semantic_search_endpoint():
             content_type=content_type,
             start_date=start_date,
             end_date=end_date,
+            participant=participant,
             min_score=min_score,
             deduplicate=deduplicate,
             db_path=os.getenv("DATABASE_PATH"),
@@ -918,6 +921,7 @@ def rag_qa_endpoint():
             meeting_id = data.get("meeting_id")
             start_date = data.get("start_date") or data.get("from_date")
             end_date = data.get("end_date") or data.get("to_date")
+            participant = data.get("participant")
         else:
             question = request.args.get("question") or request.args.get("q") or request.args.get("query") or ""
             try:
@@ -928,6 +932,7 @@ def rag_qa_endpoint():
             meeting_id = request.args.get("meeting_id")
             start_date = request.args.get("start_date") or request.args.get("from_date")
             end_date = request.args.get("end_date") or request.args.get("to_date")
+            participant = request.args.get("participant")
 
         q_clean = str(question).strip() if question else ""
 
@@ -955,6 +960,7 @@ def rag_qa_endpoint():
             content_type=content_type,
             start_date=start_date,
             end_date=end_date,
+            participant=participant,
             db_path=os.getenv("DATABASE_PATH"),
             user_id=user_id
         )

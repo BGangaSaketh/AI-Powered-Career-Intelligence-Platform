@@ -17,7 +17,7 @@ from typing import Dict, Any, List, Optional
 
 from modules.embedding_service import EmbeddingService, HashEmbeddingProvider
 from modules.vector_store import VectorStoreService
-from modules.database import get_meeting_metadata
+from modules.database import get_meeting_metadata, get_meeting_participants
 
 logger = logging.getLogger(__name__)
 
@@ -44,6 +44,7 @@ class SemanticSearchService:
         content_type: Optional[str] = None,
         start_date: Optional[str] = None,
         end_date: Optional[str] = None,
+        participant: Optional[str] = None,
         min_score: Optional[float] = None,
         deduplicate: bool = False,
         db_path: Optional[str] = None,
@@ -150,6 +151,14 @@ class SemanticSearchService:
                 e_date = str(end_date).strip()[:10]
                 m_date = str(created_at).strip()[:10] if created_at else ""
                 if m_date and m_date > e_date:
+                    continue
+
+            # Participant Filter
+            if participant and str(participant).strip() and m_id:
+                p_filter = str(participant).strip().lower()
+                m_parts = get_meeting_participants(m_id, db_path=db_path)
+                p_names = [p.get("name", "").lower() for p in m_parts] if m_parts else []
+                if not any(p_filter in p_name for p_name in p_names):
                     continue
 
             item = {

@@ -24,7 +24,8 @@ from modules.database import (
     get_complete_meeting,
     save_embeddings,
     get_meeting_embeddings,
-    delete_meeting_embeddings
+    delete_meeting_embeddings,
+    list_meetings
 )
 
 logger = logging.getLogger(__name__)
@@ -298,23 +299,58 @@ def extract_searchable_items(
     # 4. Action Items
     action_items = meeting_data.get("action_items") or []
     for idx, item in enumerate(action_items):
-        if isinstance(item, dict):
-            task = item.get("task", "").strip()
-            assigned_to = item.get("assigned_to") or "Unassigned"
-            deadline = item.get("deadline") or "None"
-            priority = item.get("priority") or "Normal"
-            status = item.get("status") or "Pending"
-            source_id = item.get("id") or f"{meeting_id}_act_{idx}"
+        if hasattr(item, "model_dump"):
+            item_dict = item.model_dump()
+        elif hasattr(item, "dict") and callable(item.dict):
+            item_dict = item.dict()
+        elif isinstance(item, dict):
+            item_dict = item
+        else:
+            item_dict = {}
 
-            if task:
-                text_repr = f"Task: {task} | Assigned to: {assigned_to} | Deadline: {deadline} | Priority: {priority} | Status: {status}"
-                items.append({
-                    "meeting_id": meeting_id,
-                    "content_type": "action_item",
-                    "source_id": source_id,
-                    "chunk_index": idx,
-                    "text": text_repr
-                })
+        task = (item_dict.get("task") or "").strip()
+        assigned_to = item_dict.get("assigned_to") or "Unassigned"
+        deadline = item_dict.get("deadline") or "None"
+        priority = item_dict.get("priority") or "Normal"
+        status = item_dict.get("status") or "Pending"
+        source_id = item_dict.get("id") or f"{meeting_id}_act_{idx}"
+
+        if task:
+            text_repr = f"Task: {task} | Assigned to: {assigned_to} | Deadline: {deadline} | Priority: {priority} | Status: {status}"
+            items.append({
+                "meeting_id": meeting_id,
+                "content_type": "action_item",
+                "source_id": source_id,
+                "chunk_index": idx,
+                "text": text_repr
+            })
+
+    # 5. Participants
+    participants = meeting_data.get("participants") or []
+    p_names = []
+    for p in participants:
+        if hasattr(p, "model_dump"):
+            p_name = (p.model_dump().get("name") or "").strip()
+        elif hasattr(p, "dict") and callable(p.dict):
+            p_name = (p.dict().get("name") or "").strip()
+        elif isinstance(p, dict):
+            p_name = (p.get("name") or "").strip()
+        elif isinstance(p, str) and p.strip():
+            p_name = p.strip()
+        else:
+            p_name = ""
+
+        if p_name:
+            p_names.append(p_name)
+
+    if p_names:
+        items.append({
+            "meeting_id": meeting_id,
+            "content_type": "participants",
+            "source_id": f"{meeting_id}_part",
+            "chunk_index": 0,
+            "text": f"Meeting Participants: {', '.join(p_names)}"
+        })
 
     return items
 
@@ -381,3 +417,36 @@ def generate_meeting_embeddings(
 
     logger.info(f"Generated and saved {len(processed_items)} embeddings for meeting '{meeting_id}'.")
     return get_meeting_embeddings(meeting_id, db_path=db_path, user_id=owner_id)
+
+
+def recover_missing_embeddings(
+    db_path: Optional[str] = None,
+    user_id: Optional[str] = None
+) -> Dict[str, Any]:
+    """
+    Scans all meetings in the database and generates embeddings for any meeting
+    that currently has no vector embeddings stored.
+    """
+    all_meetings = list_meetings(db_path=db_path, user_id=user_id)
+    recovered_ids = []
+    failed_ids = []
+
+    for m in all_meetings:
+        m_id = m.get("id")
+        if not m_id:
+            continue
+        existing_vecs = get_meeting_embeddings(m_id, db_path=db_path, user_id=user_id)
+        if not existing_vecs:
+            try:
+                generate_meeting_embeddings(m_id, db_path=db_path, user_id=user_id)
+                recovered_ids.append(m_id)
+            except Exception as exc:
+                logger.error(f"Failed to recover embeddings for meeting '{m_id}': {exc}")
+                failed_ids.append(m_id)
+
+    return {
+        "status": "ok",
+        "recovered_count": len(recovered_ids),
+        "recovered_meeting_ids": recovered_ids,
+        "failed_meeting_ids": failed_ids
+    }

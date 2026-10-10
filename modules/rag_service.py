@@ -52,6 +52,7 @@ class RAGService:
         content_type: Optional[str] = None,
         start_date: Optional[str] = None,
         end_date: Optional[str] = None,
+        participant: Optional[str] = None,
         db_path: Optional[str] = None,
         similarity_threshold: float = 0.05,
         user_id: Optional[str] = None
@@ -81,6 +82,7 @@ class RAGService:
             content_type=content_type,
             start_date=start_date,
             end_date=end_date,
+            participant=participant,
             deduplicate=False,
             db_path=db_path,
             user_id=user_id
@@ -145,15 +147,16 @@ class RAGService:
 
         # 4. Construct Source Attribution Evidence
         sources = []
-        for hit in valid_hits:
-            sources.append({
-                "meeting_id": hit.get("meeting_id"),
-                "title": hit.get("title") or "Meeting",
-                "date": hit.get("date") or hit.get("created_at") or "",
-                "content_type": hit.get("content_type", "transcript"),
-                "relevant_snippet": hit.get("relevant_snippet") or hit.get("text") or "",
-                "similarity": hit.get("similarity") or hit.get("score") or 0.0
-            })
+        if FALLBACK_NO_INFO_ANSWER not in raw_answer:
+            for hit in valid_hits:
+                sources.append({
+                    "meeting_id": hit.get("meeting_id"),
+                    "title": hit.get("title") or "Meeting",
+                    "date": hit.get("date") or hit.get("created_at") or "",
+                    "content_type": hit.get("content_type", "transcript"),
+                    "relevant_snippet": hit.get("relevant_snippet") or hit.get("text") or "",
+                    "similarity": hit.get("similarity") or hit.get("score") or 0.0
+                })
 
         latency_ms = round((time.perf_counter() - t_start) * 1000, 2)
 
